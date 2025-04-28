@@ -371,6 +371,60 @@ BEGIN
 END //
 DELIMITER ;
 
+#LISTAR PRODUTOS
+DELIMITER //
+CREATE PROCEDURE LISTAR_PRODUTOS()
+BEGIN
+    SELECT ID_PRODUTO, NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, P_QTDE_ESTOQUE_PRODUTO
+    FROM PRODUTO;
+END //
+DELIMITER ;
+#TESTE
+CALL LISTAR_PRODUTOS();
+SELECT *FROM PRODUTO;
+
+-- PROCEDURE NÃO FINALIZADA ALTERAR PRODUTO
+
+-- #ALTERAR PRODUTO
+-- DELIMITER //
+-- CREATE PROCEDURE alterar_produto(
+--     IN P_ID_USUARIO INT,
+--     IN P_NOME_USUARIO VARCHAR(255),
+--     IN P_EMAIL_USUARIO VARCHAR(255),
+--     IN P_SENHA_USUARIO VARCHAR(255)
+-- )
+-- BEGIN
+--     -- Verificar se o usuário JA´ eXiste via ID
+--     IF NOT EXISTS (SELECT 1 FROM USUARIO WHERE ID_USUARIO = P_ID_USUARIO) THEN
+--         SIGNAL SQLSTATE '45000'
+--         SET MESSAGE_TEXT = 'Erro: Usuário não encontrado pelo ID.';
+--     ELSE
+--         -- Verificar se o usuário JA´ eXiste via email
+--         IF EXISTS (SELECT 1 FROM USUARIO WHERE EMAIL_USUARIO = P_EMAIL_USUARIO AND ID_USUARIO <> P_ID_USUARIO) THEN
+--             SIGNAL SQLSTATE '45000'
+--             SET MESSAGE_TEXT = 'Erro: O email informado já está cadastrado para outro usuário.';
+--         ELSE
+--             UPDATE PRODUTO
+--             SET 
+--                 NOME_PRODUTO = P_NOME_PRODUTO,
+--                 PRECO_PRODUTO = P_PRECO_PRODUTO,
+--                 QTDE_ESTOQUE_PRODUTO = P_QTDE_ESTOQUE_PRODUTO
+--             WHERE ID_PRODUTO = P_ID_PRODUTO;
+--         END IF;
+--     END IF;
+-- END //
+-- DELIMITER ;
+-- CALL alterar_produto(1, 'Novo Nome Teste 1', 'novo1@email.com', 'novasenha');
+-- call alterar_produto(1, "Jhon deyvid Quispe Mamani", "jhonis@gmail.com", "password", now());
+
+-- create table IF NOT EXISTS PRODUTO(
+-- 	ID_PRODUTO INT AUTO_INCREMENT PRIMARY key,
+--     NOME_PRODUTO VARCHAR(255) NOT NULL,
+--     PRECO_PRODUTO FLOAT NOT NULL,
+--     FK_ID_ESTOQUE_PRODUTO INT DEFAULT NULL,
+-- 	DESC_PRODUTO VARCHAR(255) NULL,
+--     FOREIGN KEY (FK_ID_ESTOQUE_PRODUTO) REFERENCES ESTOQUE(ID_ESTOQUE) ON DELETE SET NULL
+
 #TESTE
 call PROCURAR_PRODUTO_ID(1);
 
