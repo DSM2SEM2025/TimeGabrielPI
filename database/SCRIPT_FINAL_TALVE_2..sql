@@ -1,6 +1,6 @@
-CREATE DATABASE DEMO_DB;
-USE DEMO_DB;
-#tabelas do banco
+create database db;
+use db;
+
 /*
  COMENTÁRIO DO JHON:
  LEMBRETE PARA O MOMENTO DA CRIAÇÃO DAS TABELAS VIA BACK-END:
