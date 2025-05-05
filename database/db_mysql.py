@@ -19,13 +19,13 @@ def mysql_conn():
             port = portDB,
             database = databaseDB
         )
-
         return True, f'Sucesso ao conectar no banco', conn
     except Error as err:
         return False, f'Erro ao conectar no banco: {err}', conn
     
-validation, msg, conn = mysql_conn()
-if conn:
-    print(msg)
-else:
-    print(msg)
+# validation, msg, conn = mysql_conn()
+# if conn:
+#     print(msg)
+# else:
+#     print(msg)
+
