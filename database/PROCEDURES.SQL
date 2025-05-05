@@ -5,100 +5,51 @@ SELECT *FROM ESTOQUE;
 
 DROP TABLE ESTOQUE;
 --	#CADASTRAR PRODUTO
+-- PROCEDURES
+
+SELECT *FROM PRODUTO;
+SELECT *FROM ESTOQUE;
+
+DROP TABLE ESTOQUE;
+	#CADASTRAR PRODUTO
+-- Cria a procedure CADASTRAR_PRODUTOS
 DELIMITER //
-CREATE PROCEDURE CADASTRAR_PRODUTO_ESTOQUE(
-    IN P_TIPO_ESTOQUE VARCHAR(255),
-    IN P_NOME_PRODUTO VARCHAR(255),
-    IN P_PRECO_PRODUTO FLOAT,
-    IN P_DESC_PRODUTO VARCHAR(255),
-    IN P_QTDE_ESTOQUE_PRODUTO INT
+CREATE PROCEDURE CADASTRAR_PRODUTOS (
+    IN p_nome_produto VARCHAR(255),
+    IN p_preco_produto FLOAT,
+    IN p_desc_produto VARCHAR(255),
+    IN p_tipo_estoque VARCHAR(255),
+    IN p_qtde INT
 )
 BEGIN
-    DECLARE estoque_id INT;
-    DECLARE produto_id INT;
-    DECLARE produto_estoque_id INT;
-
-    -- Tenta encontrar um estoque existente pelo tipo
-    SELECT ID_ESTOQUE INTO estoque_id
-    FROM ESTOQUE
-    WHERE TIPO_ESTOQUE = P_TIPO_ESTOQUE;
-
-    IF estoque_id IS NOT NULL THEN
-        -- Estoque existe, tenta encontrar o produto
-        SELECT ID_PRODUTO INTO produto_id
-        FROM PRODUTO
-        WHERE NOME_PRODUTO = P_NOME_PRODUTO;
-
-        IF produto_id IS NOT NULL THEN
-            -- Produto existe, verifica se já está no estoque
-            SELECT ID_ESTOQUE_PRODUTO INTO produto_estoque_id
-            FROM ESTOQUE_PRODUTO
-            WHERE FK_ID_ESTOQUE = estoque_id AND FK_ID_PRODUTO = produto_id;
-
-            IF produto_estoque_id IS NOT NULL THEN
-                -- Produto já está no estoque, atualiza a quantidade
-                UPDATE ESTOQUE_PRODUTO
-                SET QTDE = QTDE + P_QTDE_ESTOQUE_PRODUTO
-                WHERE ID_ESTOQUE_PRODUTO = produto_estoque_id;
-            ELSE
-                -- Produto não está no estoque, adiciona
-                INSERT INTO ESTOQUE_PRODUTO(FK_ID_ESTOQUE, FK_ID_PRODUTO, QTDE)
-                VALUES(estoque_id, produto_id, P_QTDE_ESTOQUE_PRODUTO);
-            END IF;
-        ELSE
-            -- Produto não existe, cadastra e adiciona ao estoque
-            INSERT INTO PRODUTO(NOME_PRODUTO, PRECO_PRODUTO, FK_ID_ESTOQUE_PRODUTO, DESC_PRODUTO)
-            VALUES (P_NOME_PRODUTO, P_PRECO_PRODUTO, estoque_id, P_DESC_PRODUTO);
-            SET produto_id = LAST_INSERT_ID();
-
-            INSERT INTO ESTOQUE_PRODUTO(FK_ID_ESTOQUE, FK_ID_PRODUTO, QTDE)
-            VALUES(estoque_id, produto_id, P_QTDE_ESTOQUE_PRODUTO);
-        END IF;
-
-        -- Adiciona o produto à lista JSON do estoque se não existir (pelo nome)
-        IF NOT EXISTS (
-            SELECT 1
-            FROM ESTOQUE
-            WHERE ID_ESTOQUE = estoque_id
-              AND JSON_CONTAINS(LISTAPRODUTOS, JSON_QUOTE(P_NOME_PRODUTO), '$')
-        ) THEN
-            UPDATE ESTOQUE
-            SET LISTAPRODUTOS = JSON_ARRAY_APPEND(LISTAPRODUTOS, '$', JSON_QUOTE(P_NOME_PRODUTO))
-            WHERE ID_ESTOQUE = estoque_id;
-        END IF;
-
-    ELSE
-        -- Cria o novo estoque
-        INSERT INTO ESTOQUE(TIPO_ESTOQUE, LISTAPRODUTOS)
-        VALUES (P_TIPO_ESTOQUE, JSON_ARRAY(JSON_QUOTE(P_NOME_PRODUTO)));
-
-        SET estoque_id = LAST_INSERT_ID(); 
-        
-        -- Cadastra o produto
-        INSERT INTO PRODUTO(NOME_PRODUTO, PRECO_PRODUTO, FK_ESTOQUE_PRODUTO, DESC_PRODUTO)
-        VALUES (P_NOME_PRODUTO, P_PRECO_PRODUTO, estoque_id, P_DESC_PRODUTO);
-        SET produto_id = LAST_INSERT_ID();
-
-        -- Insere na tabela de relacionamento ESTOQUE_PRODUTO
-        INSERT INTO ESTOQUE_PRODUTO(FK_ID_ESTOQUE, FK_ID_PRODUTO, QTDE)
-        VALUES(estoque_id, produto_id, P_QTDE_ESTOQUE_PRODUTO);
+    DECLARE v_id_produto INT;
+    DECLARE v_estoque_existente INT;
+    
+    SELECT ID_PRODUTO INTO v_id_produto
+    FROM PRODUTO
+    WHERE NOME_PRODUTO = p_nome_produto;
+    IF v_id_produto IS NULL THEN
+        INSERT INTO PRODUTO (NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO)
+        VALUES (p_nome_produto, p_preco_produto, p_desc_produto);
+        SET v_id_produto = LAST_INSERT_ID();
     END IF;
+
+    SELECT ID_ESTOQUE INTO v_estoque_existente
+    FROM ESTOQUE
+    WHERE FK_ID_PRODUTO = v_id_produto AND TIPO_ESTOQUE = p_tipo_estoque;
+
+    -- Se existe, atualiza a quantidade
+    IF v_estoque_existente IS NOT NULL THEN
+        UPDATE ESTOQUE
+        SET QTDE = QTDE + p_qtde
+        WHERE ID_ESTOQUE = v_estoque_existente;
+    ELSE
+        INSERT INTO ESTOQUE (TIPO_ESTOQUE, FK_ID_PRODUTO, QTDE)
+        VALUES (p_tipo_estoque, v_id_produto, p_qtde);
+    END IF;
+
 END //
 DELIMITER ;
-DROP PROCEDURE CADASTRAR_PRODUTO_ESTOQUE;
-
-#EXPLICAÇÃO "LAST_INSERT_ID()" Obtém o ID gerado para o novo estoque
-#TESTE
-CALL CADASTRAR_PRODUTO_ESTOQUE('Papelaria', 'Lápis', 1.50, 'Lápis HB', 10);
-CALL CADASTRAR_PRODUTO_ESTOQUE('GAMER', 'MAUSE', 10.50, 'MAUSE DA RAZE', 100);
-
-CALL CADASTRAR_PRODUTO_ESTOQUE(
-'FRUTA', -- P_TIPO_ESTOQUE VARCHAR(255),
-'MELANCIA', -- IN P_NOME_PRODUTO VARCHAR(255),
-0.50, -- IN P_PRECO_PRODUTO FLOAT,
-'MELANCIA FRESCA', -- P_DESC_PRODUTO VARCHAR(255),
-100 -- P_QTDE_ESTOQUE_PRODUTO INT
-);
 
 SELECT *FROM PRODUTO;
 SELECT *FROM ESTOQUE;
