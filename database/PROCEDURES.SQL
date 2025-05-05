@@ -1,0 +1,103 @@
+    -- PROCEDURES
+
+    SELECT *FROM PRODUTO;
+    SELECT *FROM ESTOQUE;
+
+    DROP TABLE ESTOQUE;
+    --	#CADASTRAR PRODUTO
+    -- PROCEDURES
+
+    SELECT *FROM PRODUTO;
+    SELECT *FROM ESTOQUE;
+
+    DROP TABLE ESTOQUE;
+        #CADASTRAR PRODUTO
+    -- Cria a procedure CADASTRAR_PRODUTOS
+    DELIMITER //
+    CREATE PROCEDURE CADASTRAR_PRODUTOS (
+        IN p_nome_produto VARCHAR(255),
+        IN p_preco_produto FLOAT,
+        IN p_desc_produto VARCHAR(255),
+        IN p_tipo_estoque VARCHAR(255),
+        IN p_qtde INT
+    )
+    BEGIN
+        DECLARE v_id_produto INT;
+        DECLARE v_estoque_existente INT;
+        
+        SELECT ID_PRODUTO INTO v_id_produto
+        FROM PRODUTO
+        WHERE NOME_PRODUTO = p_nome_produto;
+        IF v_id_produto IS NULL THEN
+            INSERT INTO PRODUTO (NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO)
+            VALUES (p_nome_produto, p_preco_produto, p_desc_produto);
+            SET v_id_produto = LAST_INSERT_ID();
+        END IF;
+
+        SELECT ID_ESTOQUE INTO v_estoque_existente
+        FROM ESTOQUE
+        WHERE FK_ID_PRODUTO = v_id_produto AND TIPO_ESTOQUE = p_tipo_estoque;
+
+        -- Se existe, atualiza a quantidade
+        IF v_estoque_existente IS NOT NULL THEN
+            UPDATE ESTOQUE
+            SET QTDE = QTDE + p_qtde
+            WHERE ID_ESTOQUE = v_estoque_existente;
+        ELSE
+            INSERT INTO ESTOQUE (TIPO_ESTOQUE, FK_ID_PRODUTO, QTDE)
+            VALUES (p_tipo_estoque, v_id_produto, p_qtde);
+        END IF;
+
+    END //
+    DELIMITER ;
+
+    SELECT *FROM PRODUTO;
+    SELECT *FROM ESTOQUE;
+    SELECT *FROM ESTOQUE_PRODUTO;
+
+
+    DELIMITER //
+    CREATE PROCEDURE REMOVER_PRODUTO_ID(
+        IN P_ID_ESTOQUE INT
+    )
+    BEGIN
+        START TRANSACTION;
+        DELETE FROM PRODUTO WHERE FK_ESTOQUE_PRODUTO = P_ID_ESTOQUE;
+        DELETE FROM ESTOQUE WHERE ID_ESTOQUE = P_ID_ESTOQUE; 
+        COMMIT;
+    END //
+    DELIMITER ;
+    CALL REMOVER_PRODUTO_ID(1);
+
+    DELIMITER //
+    CREATE PROCEDURE PROCURAR_PRODUTO_ID(
+        IN P_ID_PRODUTO INT
+    )
+    BEGIN
+        IF exists (SELECT 1 FROM PRODUTO WHERE ID_PRODUTO = P_ID_PRODUTO) THEN
+            SELECT
+                p.ID_PRODUTO,
+                p.NOME_PRODUTO,
+                p.PRECO_PRODUTO,
+                p.DESC_PRODUTO,
+                e.ID_ESTOQUE,
+                e.TIPO_ESTOQUE
+            FROM PRODUTO p JOIN ESTOQUE e ON p.FK_ID_ESTOQUE_PRODUTO = e.ID_ESTOQUE WHERE p.ID_PRODUTO = P_ID_PRODUTO;
+        ELSE
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Erro: Estoque não encontrado.';
+        END IF;
+    END //
+    DELIMITER ;
+
+    #LISTAR PRODUTOS
+    DELIMITER //
+    CREATE PROCEDURE LISTAR_PRODUTOS()
+    BEGIN
+        SELECT ID_PRODUTO, NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, P_QTDE_ESTOQUE_PRODUTO
+        FROM PRODUTO;
+    END //
+    DELIMITER ;
+    #TESTE
+    CALL LISTAR_PRODUTOS();
+    SELECT *FROM PRODUTO;
