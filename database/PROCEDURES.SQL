@@ -471,4 +471,3 @@ call ATUALIZAR_PRODUTO(
 1000, -- pode ser null caso n queira atualizar a qtde, fazer isso no back-end
 1
 );
-
