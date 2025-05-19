@@ -1,0 +1,42 @@
+import os
+from dotenv import load_dotenv
+from pydantic import BaseModel, ValidationError
+from typing import Optional, Protocol
+
+
+
+class DBModel(BaseModel):
+    user:str
+    password:str
+    host: str
+    database:str
+    port:int
+    sid: Optional[str] = None
+    connection_url: Optional[str] = None
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        self.connection_url = self._generate_url()
+
+    def _generate_url(self):
+        return f"mysql+mysqlconnector://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
+
+    @classmethod
+    def get_dotenv(cls, dotenv_path: Optional[str] = ".env") -> "DBModel":
+        load_dotenv(dotenv_path="database/.env")
+        return cls(
+            user=os.getenv("user"),
+            password=os.getenv("password"),
+            host=os.getenv("host"),
+            database=os.getenv("database"),
+            port=int(os.getenv("port", 3306)),
+            sid=os.getenv("sid")
+        )
+
+class DataBaseConnector(Protocol):
+    def connect(self)->bool:
+        ...
+    def disconect(self)->None:
+        ...
+
+

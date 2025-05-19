@@ -1,34 +1,53 @@
+from database.db_mysql import MySqlConnector
+from database.db_model import DBModel
+from mysql.connector import Error
 
-from mysql.connector import Error, connect
-def conectar():
-    print('teste')
-    try:
-        print('teste2')
-        conn = connect(host='localhost', user='root', password='root',port = 3306, database='DEMO_DB')
-        return conn, f'sucessp'
-    except Error as err:
-        return conn, f'erro {err}'
-conn, msg =conectar()
-if conn: 
-    print(msg)
-else:
-    print(msg)
+
+
+
+# def conectar():
+#     print('teste')
+#     try:
+#         print('teste2')
+#         conn = connect(host='localhost', user='root', password='root',port = 3306, database='DEMO_DB')
+#         return conn, f'sucessp'
+#     except Error as err:
+#         return conn, f'erro {err}'
+# conn, msg =conectar()
+# if conn: 
+#     print(msg)
+# else:
+#     print(msg)
+
+
+
+
 def criar_tabela():
-    db = conectar()
-    cursor = db.cursor()
-    cursor.execute('''
-    create table IF NOT EXISTS PRODUTO(
-	ID_PRODUTO INT AUTO_INCREMENT PRIMARY key,
-    NOME_PRODUTO VARCHAR(255) NOT NULL,
-    PRECO_PRODUTO FLOAT NOT NULL,
-    FK_ID_ESTOQUE_PRODUTO INT DEFAULT NULL,
-	DESC_PRODUTO VARCHAR(255) NULL,
-    FOREIGN KEY (FK_ID_ESTOQUE_PRODUTO) REFERENCES ESTOQUE(ID_ESTOQUE) ON DELETE SET NULL
-    );     
-    ''')
-    db.commit()
-    cursor.close()
-    db.close()
+    config = DBModel.get_dotenv()
+    db = MySqlConnector(config)
+    conn, msg = db.connection()
+
+    if conn:
+        print(msg)
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+            create table IF NOT EXISTS PRODUTO(
+            ID_PRODUTO INT AUTO_INCREMENT PRIMARY key,
+            NOME_PRODUTO VARCHAR(255) NOT NULL,
+            PRECO_PRODUTO FLOAT NOT NULL,
+            FK_ID_ESTOQUE_PRODUTO INT DEFAULT NULL,
+            DESC_PRODUTO VARCHAR(255) NULL,
+            FOREIGN KEY (FK_ID_ESTOQUE_PRODUTO) REFERENCES ESTOQUE(ID_ESTOQUE) ON DELETE SET NULL
+            );     
+            ''')
+            conn.commit()
+            cursor.close()
+            conn.close()
+        finally:
+            db.disconect()
+
+criar_tabela()
 
 def CADASTRAR_PRODUTO_ESTOQUE(NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, TIPO_PRODUTO, QTDE_ESTOQUE):
     try:
