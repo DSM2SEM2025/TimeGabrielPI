@@ -2,26 +2,6 @@ from database.db_mysql import MySqlConnector
 from database.db_model import DBModel
 from mysql.connector import Error
 
-
-
-
-# def conectar():
-#     print('teste')
-#     try:
-#         print('teste2')
-#         conn = connect(host='localhost', user='root', password='root',port = 3306, database='DEMO_DB')
-#         return conn, f'sucessp'
-#     except Error as err:
-#         return conn, f'erro {err}'
-# conn, msg =conectar()
-# if conn: 
-#     print(msg)
-# else:
-#     print(msg)
-
-
-
-
 def criar_tabela():
     config = DBModel.get_dotenv()
     db = MySqlConnector(config)
@@ -50,21 +30,30 @@ def criar_tabela():
 criar_tabela()
 
 def CADASTRAR_PRODUTO_ESTOQUE(NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, TIPO_PRODUTO, QTDE_ESTOQUE):
+    config = DBModel.get_dotenv()
+    db = MySqlConnector(config)
+    conn, msg = db.connection()
+
+    if not conn:
+        print(msg)
+        return False, 'conexão falhou'
+
     try:
-        db = conectar()
-        cursor = db.cursor()
-        command="CALL CADASTRAR_PRODUTO_ESTOQUE('%s', '%s', '%s', '%s', '%s')"
-        values=(NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, TIPO_PRODUTO, QTDE_ESTOQUE)
+        cursor = conn.cursor()
+        command = "CALL CADASTRAR_PRODUTO_ESTOQUE(%s, %s, %s, %s, %s)"
+        values = (NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, TIPO_PRODUTO, QTDE_ESTOQUE)
         cursor.execute(command, values)
-        db.commit()
-        return True, F'sucesso'
+        conn.commit()
+        return True, 'sucesso'
     except Exception as e:
         print(f"Erro ao inserir produto: {e}")
-        return False, f'fracassado'
+        return False, 'fracassado'
     finally:
-        if db.is_connected():
+        if cursor:
             cursor.close()
-            db.close()
+        if conn:
+            conn.close()
+        db.disconect()
 
 # CADASTRAR_PRODUTO_ESTOQUE('uva', 10.50, 'Uva verde', 'uva', 100)
 # conn, msg = CADASTRAR_PRODUTO_ESTOQUE('uva', 10.50, 'Uva verde', 'uva', 100)
@@ -74,63 +63,109 @@ def CADASTRAR_PRODUTO_ESTOQUE(NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, TIPO_PR
 #     print(msg)
 
 def LISTAR_PRODUTOS():
+    config = DBModel.get_dotenv()
+    db = MySqlConnector(config)
+    conn, msg = db.connection()
+
+    if not conn:
+        print(msg)
+        return False, 'conexão falhou'
+
     try:
-        db = conectar()
-        cursor = db.cursor()
-        command="CALL LISTAR_PRODUTOS()"
-        values=()
-        cursor.execute(command, values)
-        db.commit()
+        cursor = conn.cursor()
+        command = "CALL LISTAR_PRODUTOS()"
+        cursor.execute(command)
+        resultados = cursor.fetchall()
+        return True, resultados
     except Exception as e:
         print(f"Erro ao listar produtos: {e}")
+        return False, 'fracassado'
     finally:
-        if db.is_connected():
+        if cursor:
             cursor.close()
-            db.close()
+        if conn:
+            conn.close()
+        db.disconect()
 
 def PROCURAR_PRODUTO_ID(ID_PRODUTO):
+    config = DBModel.get_dotenv()
+    db = MySqlConnector(config)
+    conn, msg = db.connection()
+
+    if not conn:
+        print(msg)
+        return False, 'conexão falhou'
+
     try:
-        db = conectar()
-        cursor = db.cursor()
-        command="CALL PROCURAR_PRODUTO_ID('%s')"
-        values=(ID_PRODUTO,)
+        cursor = conn.cursor()
+        command = "CALL PROCURAR_PRODUTO_ID(%s)"
+        values = (ID_PRODUTO,)
         cursor.execute(command, values)
-        db.commit()
+        resultados = cursor.fetchall()
+        return True, resultados
     except Exception as e:
         print(f"Erro ao procurar produto: {e}")
+        return False, 'fracassado'
     finally:
-        if db.is_connected():
+        if cursor:
             cursor.close()
-            db.close()
+        if conn:
+            conn.close()
+        db.disconect()
 
 def ATUALIZAR_PRODUTO(NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, TIPO_ESTOQUE, QTDE_ESTOQUE, TIPO_ATUALIZACAO):
+    config = DBModel.get_dotenv()
+    db = MySqlConnector(config)
+    conn, msg = db.connection()
+
+    if not conn:
+        print(msg)
+        return False, 'conexão falhou'
+
     try:
-        db = conectar()
-        cursor = db.cursor()
-        command="CALL ATUALIZAR_PRODUTO('%s', '%s', '%s', '%s', '%s', '%s')"
-        values=(NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, TIPO_ESTOQUE, QTDE_ESTOQUE, TIPO_ATUALIZACAO)
+        cursor = conn.cursor()
+        command = "CALL ATUALIZAR_PRODUTO(%s, %s, %s, %s, %s, %s)"
+        values = (NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, TIPO_ESTOQUE, QTDE_ESTOQUE, TIPO_ATUALIZACAO)
         cursor.execute(command, values)
-        db.commit()
-        return {"message": "Produto atualizado com sucesso."}
+        conn.commit()
+        return True, 'sucesso'
+
     except Exception as e:
-        return {"error": f"Erro ao atualizar usuário: {e}"}
+        print(f"Erro ao atualizar produto: {e}")
+        return False, 'fracassado'
+
     finally:
-        if db.is_connected():
+        if cursor:
             cursor.close()
-            db.close()
+        if conn:
+            conn.close()
+        db.disconect()
 
 def EXCLUIR_PRODUTO_GERAL(NOME_PRODUTO):
+    config = DBModel.get_dotenv()
+    db = MySqlConnector(config)
+    conn, msg = db.connection()
+
+    if not conn:
+        print(msg)
+        return False, 'conexão falhou'
+
     try:
-        db = conectar()
-        cursor = db.cursor()
-        command="CALL EXCLUIR_PRODUTO_GERAL('%s')"
-        values=(NOME_PRODUTO,)
+        cursor = conn.cursor()
+        command = "CALL EXCLUIR_PRODUTO_GERAL(%s)"
+        values = (NOME_PRODUTO,)
         cursor.execute(command, values)
-        db.commit()
+        conn.commit()
         print(f"Produto '{NOME_PRODUTO}' excluído com sucesso")
+        return True, 'produto excluído'
+    
     except Exception as e:
         print(f"Erro ao remover produto: {e}")
+        return False, 'fracassado'
+    
     finally:
-        if db.is_connected():
+        if cursor:
             cursor.close()
-            db.close()
+        if conn:
+            conn.close()
+        db.disconect()

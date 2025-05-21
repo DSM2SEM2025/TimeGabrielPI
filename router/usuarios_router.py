@@ -1,17 +1,17 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr
 from typing import List
-from model.usuarios_model.usuarios_model import (
-    cadastrar_usuario,
-    excluir_usuario_id,
-    alterar_usuario,
-    listar_usuarios,
-    fazer_login
+
+from controller.usuarios_controller import (
+    criar_usuario_controller,
+    listar_usuarios_controller,
+    excluir_usuario_controller,
+    atualizar_usuario_controller,
+    login_controller
 )
 
 router = APIRouter()
 
-# Modelo Pydantic para entrada de dados
 class Usuario(BaseModel):
     nome_usuario: str
     email_usuario: EmailStr
@@ -31,31 +31,38 @@ class Login(BaseModel):
 @router.post("/usuarios", status_code=201)
 def criar_usuario(usuario: Usuario):
     try:
-        cadastrar_usuario(usuario.nome_usuario, usuario.email_usuario, usuario.senha_usuario, usuario.tipo_conta)
+        criar_usuario_controller(
+            usuario.nome_usuario,
+            usuario.email_usuario,
+            usuario.senha_usuario,
+            usuario.tipo_conta
+        )
         return {"mensagem": "Usuário cadastrado com sucesso."}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/usuarios", response_model=List[dict])
 def listar():
-    usuarios = listar_usuarios()
-    return usuarios
+    return listar_usuarios_controller()
 
 @router.delete("/usuarios/{id}")
 def deletar_usuario(id: int):
-    excluir_usuario_id(id)
+    excluir_usuario_controller(id)
     return {"mensagem": f"Usuário com ID {id} excluído com sucesso."}
 
 @router.put("/usuarios")
 def atualizar(usuario: UsuarioUpdate):
-    alterar_usuario(usuario.id_usuario, usuario.nome_usuario, usuario.email_usuario, usuario.senha_usuario)
+    atualizar_usuario_controller(
+        usuario.id_usuario,
+        usuario.nome_usuario,
+        usuario.email_usuario,
+        usuario.senha_usuario
+    )
     return {"mensagem": f"Usuário com ID {usuario.id_usuario} atualizado com sucesso."}
 
 @router.post("/login")
 def login(dados: Login):
-    usuario = fazer_login(dados.email_usuario, dados.senha_usuario)
+    usuario = login_controller(dados.email_usuario, dados.senha_usuario)
     if usuario:
         return usuario
     raise HTTPException(status_code=401, detail="Credenciais inválidas.")
-
-

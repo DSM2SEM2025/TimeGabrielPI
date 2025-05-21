@@ -1,13 +1,16 @@
-from fastapi import APIRouter, Request, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
-from pydantic import BaseModel, EmailStr, constr
-from model.usuarios_model import usuarios_model
+from model.usuarios_model import (cadastrar_usuario, excluir_usuario_id, alterar_usuario, listar_usuarios, fazer_login)
 
-router = APIRouter()
+def criar_usuario_controller(nome_usuario, emial_usuario, senha_usuario, tipo_conta):
+    return cadastrar_usuario(nome_usuario, emial_usuario, senha_usuario, tipo_conta)
 
-class usuario_base(BaseModel):
-    nome_usuario: constr (min_length=3, max_length=50)
-    email_usuario: EmailStr
-    senha_usuario: constr (min_length=8, max_length=20)
+def listar_usuarios_controller():
+    return listar_usuarios()
 
-@router.get("/")
+def deletar_usuario_controller(id_usuario):
+    return excluir_usuario_id(id_usuario)
+
+def atualizar_usuario_controller(id_usuario, nome_usuario, email_usuario, senha_usuario):
+    return alterar_usuario(id_usuario, nome_usuario, email_usuario, senha_usuario)
+
+def login_controller(email_usuario, senha_usuario):
+    return fazer_login(email_usuario, senha_usuario)

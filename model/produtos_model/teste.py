@@ -1,6 +1,19 @@
 from database.db_mysql import MySqlConnector
 from database.db_model import DBModel
 
+# def conectar():
+#     print('teste')
+#     try:
+#         print('teste2')
+#         conn = connect(host='localhost', user='root', password='root',port = 3306, database='DEMO_DB')
+#         return conn, f'sucessp'
+#     except Error as err:
+#         return conn, f'erro {err}'
+# conn, msg =conectar()
+# if conn: 
+#     print(msg)
+# else:
+#     print(msg)
 
 def main():
     config = DBModel.get_dotenv()
