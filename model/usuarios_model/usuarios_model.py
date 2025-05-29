@@ -33,6 +33,8 @@ def excluir_usuario_id(ID_USUARIO):
         if db.is_connected():
             db.close()
 
+
+
 def alterar_usuario(ID_USUARIO, NOME_USUARIO, EMAIL_USUARIO, SENHA_USUARIO):
     try:
         db = conectar()

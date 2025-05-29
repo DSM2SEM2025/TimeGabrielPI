@@ -36,3 +36,36 @@ def main():
 if __name__ == "__main__":
     main()
 
+
+# def criar_tabela():
+#     config = DBModel.get_dotenv()
+#     db = MySqlConnector(config)
+#     conn, msg = db.connection()
+
+#     if conn:
+#         print(msg)
+#         try:
+#             cursor = conn.cursor()
+#             cursor.execute('''
+#             create table IF NOT EXISTS PRODUTO(
+#             ID_PRODUTO INT AUTO_INCREMENT PRIMARY key,
+#             NOME_PRODUTO VARCHAR(255) NOT NULL,
+#             PRECO_PRODUTO FLOAT NOT NULL,
+#             FK_ID_ESTOQUE_PRODUTO INT DEFAULT NULL,
+#             DESC_PRODUTO VARCHAR(255) NULL,
+#             FOREIGN KEY (FK_ID_ESTOQUE_PRODUTO) REFERENCES ESTOQUE(ID_ESTOQUE) ON DELETE SET NULL
+#             );     
+#             ''')
+#             conn.commit()
+#             cursor.close()
+#             conn.close()
+#         finally:
+#             db.disconect()
+
+# criar_tabela()
+# CADASTRAR_PRODUTO_ESTOQUE('uva', 10.50, 'Uva verde', 'uva', 100)
+# conn, msg = CADASTRAR_PRODUTO_ESTOQUE('uva', 10.50, 'Uva verde', 'uva', 100)
+# if conn:
+#     print(msg)
+# else:
+#     print(msg)

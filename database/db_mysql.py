@@ -11,7 +11,6 @@ class MySqlConnector(DataBaseConnector):
 
 
     def connection(self):
-        print("teste 1")
         try:
             self.conn = connect(
                 user = self.db_config.user,
