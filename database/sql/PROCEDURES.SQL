@@ -93,28 +93,34 @@ SELECT *FROM USUARIO;
 DELIMITER //
 
 CREATE PROCEDURE FAZER_LOGIN(
-	IN P_EMAIL_USUARIO VARCHAR(255),
-	IN P_SENHA_USUARIO VARCHAR(255)
+    IN P_EMAIL_USUARIO VARCHAR(255),
+    IN P_SENHA_USUARIO VARCHAR(255)
 ) 
 BEGIN
     IF EXISTS (
         SELECT 1 FROM USUARIO 
         WHERE EMAIL_USUARIO = P_EMAIL_USUARIO 
-        AND SENHA_USUARIO = P_SENHA_USUARIO)  
-THEN
-    SELECT
-        ID_USUARIO,
-        NOME_USUARIO,
-        EMAIL_USUARIO,
-        TIPO_CONTA,
-        'Login realizado com sucesso!' AS MENSAGEM
-    FROM USUARIO
-    WHERE EMAIL_USUARIO = P_EMAIL_USUARIO;
-ELSE
-    SIGNAL SQLSTATE '45000'
-    SET MESSAGE_TEXT = 'Erro: Email ou senha inválidos.';
-END IF;
-END//
+        AND SENHA_USUARIO = P_SENHA_USUARIO
+    ) THEN
+        SELECT
+            ID_USUARIO,
+            NOME_USUARIO,
+            EMAIL_USUARIO,
+            TIPO_CONTA,
+            'Login realizado com sucesso!' AS MENSAGEM
+        FROM USUARIO
+        WHERE EMAIL_USUARIO = P_EMAIL_USUARIO;
+    ELSE
+        SELECT NULL AS ID_USUARIO,
+               NULL AS NOME_USUARIO,
+               NULL AS EMAIL_USUARIO,
+               NULL AS TIPO_CONTA,
+               'Credenciais inválidas.' AS MENSAGEM;
+    END IF;
+END //
+
+DELIMITER ;
+
 
 DELIMITER ;
 

@@ -16,4 +16,5 @@ starlette==0.36.3
 typing_extensions==4.9.0
 uvicorn==0.23.2
 email-validator
-dotenv
+python-dotenv
+python-jose[cryptography]

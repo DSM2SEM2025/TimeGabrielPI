@@ -1,13 +1,14 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr
 from typing import List
-
-from controller.usuarios_controller import (
+from fastapi import Depends
+from utils.auth import pegar_usuario
+from controller.usuarios_controller.usuarios_controller import (
     criar_usuario_controller,
     listar_usuarios_controller,
-    excluir_usuario_controller,
+    deletar_usuario_controller,
     atualizar_usuario_controller,
-    login_controller
+    fazer_login_controller
 )
 
 router = APIRouter()
@@ -47,7 +48,7 @@ def listar():
 
 @router.delete("/usuarios/{id}")
 def deletar_usuario(id: int):
-    excluir_usuario_controller(id)
+    deletar_usuario_controller(id)
     return {"mensagem": f"Usuário com ID {id} excluído com sucesso."}
 
 @router.put("/usuarios")
@@ -62,7 +63,11 @@ def atualizar(usuario: UsuarioUpdate):
 
 @router.post("/login")
 def login(dados: Login):
-    usuario = login_controller(dados.email_usuario, dados.senha_usuario)
+    usuario = fazer_login_controller(dados.email_usuario, dados.senha_usuario)
     if usuario:
         return usuario
     raise HTTPException(status_code=401, detail="Credenciais inválidas.")
+
+@router.get("/rota-protegida")
+def rota_protegida(usuario=Depends(pegar_usuario)):
+    return {"msg": "Acesso autorizado", "usuario": usuario}
