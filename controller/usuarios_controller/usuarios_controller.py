@@ -1,4 +1,4 @@
-from model.usuarios_model.usuarios_model import (conectar, cadastrar_usuario, excluir_usuario_id, alterar_usuario, listar_usuarios, fazer_login)
+from model.usuarios_model.usuarios_model import (cadastrar_usuario, excluir_usuario_id, alterar_usuario, listar_usuarios, fazer_login)
 from utils.auth import criar_token
 
 def criar_usuario_controller(email_usuario, senha_usuario):

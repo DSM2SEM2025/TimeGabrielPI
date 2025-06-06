@@ -5,7 +5,7 @@ from mysql.connector import Error
 
 def criar_banco_de_dados():
     try:
-        connection = mysql.connector.connect(host='localhost', user='root', password='962266514')
+        connection = mysql.connector.connect(host='localhost', user='root', password='')
 
         cursor = connection.cursor()
         cursor.execute("CREATE DATABASE IF NOT EXISTS db")
@@ -19,7 +19,7 @@ def criar_banco_de_dados():
 
 def criar_tabelas():
     try:
-        connection = mysql.connector.connect(host='localhost', user='root', password='962266514', database='db')
+        connection = mysql.connector.connect(host='localhost', user='root', password='', database='db')
         cursor = connection.cursor()
 
         #CRIAÇÃO DE TABELAS

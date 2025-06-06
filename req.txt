@@ -1,9 +1,0 @@
-mysql-connector-python
-uvicorn
-pydantic
-PyJWT
-typing_extensions
-email-validator
-python-dotenv
-python-jose[cryptography]
-fastapi
