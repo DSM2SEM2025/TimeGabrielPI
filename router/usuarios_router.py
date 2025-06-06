@@ -14,14 +14,11 @@ from controller.usuarios_controller.usuarios_controller import (
 router = APIRouter()
 
 class Usuario(BaseModel):
-    nome_usuario: str
     email_usuario: EmailStr
     senha_usuario: str
-    tipo_conta: int
 
 class UsuarioUpdate(BaseModel):
     id_usuario: int
-    nome_usuario: str
     email_usuario: EmailStr
     senha_usuario: str
 
@@ -33,10 +30,8 @@ class Login(BaseModel):
 def criar_usuario(usuario: Usuario):
     try:
         criar_usuario_controller(
-            usuario.nome_usuario,
             usuario.email_usuario,
-            usuario.senha_usuario,
-            usuario.tipo_conta
+            usuario.senha_usuario
         )
         return {"mensagem": "Usuário cadastrado com sucesso."}
     except Exception as e:
@@ -55,7 +50,6 @@ def deletar_usuario(id: int):
 def atualizar(usuario: UsuarioUpdate):
     atualizar_usuario_controller(
         usuario.id_usuario,
-        usuario.nome_usuario,
         usuario.email_usuario,
         usuario.senha_usuario
     )
@@ -67,7 +61,3 @@ def login(dados: Login):
     if usuario:
         return usuario
     raise HTTPException(status_code=401, detail="Credenciais inválidas.")
-
-@router.get("/rota-protegida")
-def rota_protegida(usuario=Depends(pegar_usuario)):
-    return {"msg": "Acesso autorizado", "usuario": usuario}

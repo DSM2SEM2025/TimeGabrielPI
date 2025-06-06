@@ -1,18 +1,13 @@
 from database.db_mysql import MySqlConnector
 from database.db_model import DBModel
-from mysql.connector import Error, connect
-
-
+from mysql.connector import Error
+from pydantic import BaseModel, ValidationError
+from typing import Optional, Protocol
 
 def CADASTRAR_PRODUTO_ESTOQUE(NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, TIPO_PRODUTO, QTDE_ESTOQUE):
     config = DBModel.get_dotenv()
     db = MySqlConnector(config)
     conn, msg = db.connection()
-
-    if not conn:
-        print(msg)
-        return False, 'conexão falhou'
-
     try:
         cursor = conn.cursor()
         command = "CALL CADASTRAR_PRODUTO_ESTOQUE(%s, %s, %s, %s, %s)"
@@ -26,45 +21,32 @@ def CADASTRAR_PRODUTO_ESTOQUE(NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, TIPO_PR
     finally:
         if cursor:
             cursor.close()
-        if conn:
+        if db:
             conn.close()
-        db.disconect()
 
 
 def LISTAR_PRODUTOS():
     config = DBModel.get_dotenv()
     db = MySqlConnector(config)
     conn, msg = db.connection()
-    if not conn:
-        print(msg)
-        return False
     try:
-        cursor = conn.cursor()
-        cursor.callproc("listar_produtos")
-        results = cursor.stored_results()
-        for res in results:
-            produtos = res.fetchall()
-            return produtos
+        cursor = conn.cursor(dictionary=True)
+        cursor.callproc("LISTAR_PRODUTOS")   
+        produtos = []
+        for result in cursor.stored_results():
+            produtos.extend(result.fetchall())
 
-    except Error as err:
-        return False, f'Erro ao buscar: {err}'
-    finally:
-        if cursor:
-            cursor.close()
-        if conn and conn.is_connected():
-            conn.close()
-
+        cursor.close()
+        conn.close()
+        return produtos
+    except Error as error:
+        return []
 
 
 def PROCURAR_PRODUTO_ID(ID_PRODUTO):
     config = DBModel.get_dotenv()
     db = MySqlConnector(config)
     conn, msg = db.connection()
-
-    if not conn:
-        print(msg)
-        return False, 'conexão falhou'
-
     try:
         cursor = conn.cursor()
         command = "CALL PROCURAR_PRODUTO_ID(%s)"
@@ -77,26 +59,14 @@ def PROCURAR_PRODUTO_ID(ID_PRODUTO):
     finally:
         if cursor:
             cursor.close()
-        if conn:
+        if db:
             conn.close()
-        db.disconect()
 
-# res, msg = PROCURAR_PRODUTO_ID(1)
-
-# if res:
-#     print(msg)
-# else:
-#     print(msg)
 
 def ATUALIZAR_PRODUTO(NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, TIPO_ESTOQUE, QTDE_ESTOQUE, TIPO_ATUALIZACAO):
     config = DBModel.get_dotenv()
     db = MySqlConnector(config)
     conn, msg = db.connection()
-
-    if not conn:
-        print(msg)
-        return False, 'conexão falhou'
-
     try:
         cursor = conn.cursor()
         command = "CALL ATUALIZAR_PRODUTO(%s, %s, %s, %s, %s, %s)"
@@ -104,34 +74,31 @@ def ATUALIZAR_PRODUTO(NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, TIPO_ESTOQUE, Q
         cursor.execute(command, values)
         conn.commit()
         return True, 'sucesso'
-
     except Exception as e:
         print(f"Erro ao atualizar produto: {e}")
         return False, 'fracassado'
 
     finally:
         if cursor:
+            cursor.fetchall()
             cursor.close()
         if conn:
             conn.close()
-        db.disconect()
 
-def EXCLUIR_PRODUTO_GERAL(NOME_PRODUTO):
+print(ATUALIZAR_PRODUTO('maça', 1000, 'UPDATE_TESTE', 'maça', 2000, 2))
+
+
+def EXCLUIR_PRODUTO_GERAL(ID_PRODUTO):
     config = DBModel.get_dotenv()
     db = MySqlConnector(config)
     conn, msg = db.connection()
-
-    if not conn:
-        print(msg)
-        return False, 'conexão falhou'
-
     try:
         cursor = conn.cursor()
         command = "CALL EXCLUIR_PRODUTO_GERAL(%s)"
-        values = (NOME_PRODUTO,)
+        values = (ID_PRODUTO,)
         cursor.execute(command, values)
         conn.commit()
-        print(f"Produto '{NOME_PRODUTO}' excluído com sucesso")
+        print(f"Produto '{ID_PRODUTO}' excluído com sucesso")
         return True, 'produto excluído'
     
     except Exception as e:
@@ -141,6 +108,13 @@ def EXCLUIR_PRODUTO_GERAL(NOME_PRODUTO):
     finally:
         if cursor:
             cursor.close()
-        if conn:
+        if db:
             conn.close()
-        db.disconect()
+
+
+
+def coleta_de_dados_pdf():
+    return
+
+
+

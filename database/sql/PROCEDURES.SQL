@@ -6,20 +6,15 @@
 DELIMITER //
 
 CREATE PROCEDURE CADASTRAR_USUARIO(
-    IN P_NOME_USUARIO VARCHAR(100),
     IN P_EMAIL_USUARIO VARCHAR(100),
-    IN P_SENHA_USUARIO VARCHAR(100),
-    IN P_TIPO_CONTA INT
+    IN P_SENHA_USUARIO VARCHAR(100)
 )
 BEGIN
-    INSERT INTO USUARIO (NOME_USUARIO, EMAIL_USUARIO, SENHA_USUARIO, TIPO_CONTA)
-    VALUES (P_NOME_USUARIO, P_EMAIL_USUARIO, P_SENHA_USUARIO, P_TIPO_CONTA);
+    INSERT INTO USUARIO (EMAIL_USUARIO, SENHA_USUARIO)
+    VALUES (P_EMAIL_USUARIO, P_SENHA_USUARIO);
 END //
 
 DELIMITER ;
-
-#TESTE
-CALL CADASTRAR_USUARIO('João da Silva', 'joao12@email.com', 'senha123', 1);
 
 
 	#EXCLUIR USUARIO
@@ -45,8 +40,7 @@ CALL EXCLUIR_USUARIO_ID(3);
 	#ALTERAR USUARIO
 DELIMITER //
 CREATE PROCEDURE alterar_usuario(
-    IN P_ID_USUARIO INT,
-    IN P_NOME_USUARIO VARCHAR(255),
+    IN P_ID_USUARIO INT
     IN P_EMAIL_USUARIO VARCHAR(255),
     IN P_SENHA_USUARIO VARCHAR(255)
 )
@@ -62,16 +56,13 @@ BEGIN
             SET MESSAGE_TEXT = 'Erro: O email informado já está cadastrado para outro usuário.';
         ELSE
             UPDATE USUARIO
-            SET NOME_USUARIO = P_NOME_USUARIO,
-                EMAIL_USUARIO = P_EMAIL_USUARIO,
+            SET EMAIL_USUARIO = P_EMAIL_USUARIO,
                 SENHA_USUARIO = P_SENHA_USUARIO
             WHERE ID_USUARIO = P_ID_USUARIO;
         END IF;
     END IF;
 END //
 DELIMITER ;
-CALL alterar_usuario(1, 'Novo Nome Teste 1', 'novo1@email.com', 'novasenha');
-call alterar_usuario(1, "Jhon deyvid Quispe Mamani", "jhonis@gmail.com", "password", now());
 
 	#LISTAR USUARIO
 DELIMITER //
@@ -104,29 +95,19 @@ BEGIN
     ) THEN
         SELECT
             ID_USUARIO,
-            NOME_USUARIO,
             EMAIL_USUARIO,
-            TIPO_CONTA,
             'Login realizado com sucesso!' AS MENSAGEM
         FROM USUARIO
         WHERE EMAIL_USUARIO = P_EMAIL_USUARIO;
     ELSE
-        SELECT NULL AS ID_USUARIO,
-               NULL AS NOME_USUARIO,
+        SELECT NULL AS ID_USUARIO
                NULL AS EMAIL_USUARIO,
-               NULL AS TIPO_CONTA,
                'Credenciais inválidas.' AS MENSAGEM;
     END IF;
 END //
 
 DELIMITER ;
 
-
-DELIMITER ;
-
-	#TESTE
-INSERT INTO USUARIO (NOME_USUARIO, EMAIL_USUARIO, SENHA_USUARIO, TIPO_CONTA)
-VALUES ('Maria Souza', 'maria@email.com', SHA2('senha123', 256), 1);
 
 	#PROCEDURES DA TABELA ESTOQUE. JUNTEI COM OUTRA FUNÇÃO DE PRODUTOS: ALTERAR ESTOQUE MANUAL
     
@@ -135,38 +116,38 @@ VALUES ('Maria Souza', 'maria@email.com', SHA2('senha123', 256), 1);
     -- REMOVER PRODUTO
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS EXCLUIR_PRODUTO_GERAL;
+DELIMITER //
+
 CREATE PROCEDURE EXCLUIR_PRODUTO_GERAL(
-    IN P_NOME_PRODUTO VARCHAR(255)
+    IN P_ID_PRODUTO INT
 )
 BEGIN
-    DECLARE produto_id INT;
     DECLARE estoque_id INT;
 
     START TRANSACTION;
 
-    SELECT ID_PRODUTO, FK_ID_ESTOQUE INTO produto_id, estoque_id
-    FROM PRODUTO
-    WHERE NOME_PRODUTO = P_NOME_PRODUTO;
+    SELECT FK_ID_ESTOQUE INTO estoque_id
+    FROM PRODUTOS
+    WHERE ID_PRODUTO = P_ID_PRODUTO;
 
-    IF produto_id IS NULL THEN
+    IF estoque_id IS NULL THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Erro: produto não encontrado.';
+        SET MESSAGE_TEXT = 'Erro: Produto não encontrado.';
         ROLLBACK;
     ELSE
-        DELETE FROM PRODUTO
-        WHERE ID_PRODUTO = produto_id;
+        DELETE FROM PRODUTOS
+        WHERE ID_PRODUTO = P_ID_PRODUTO;
 
-        IF estoque_id IS NOT NULL THEN
-            DELETE FROM ESTOQUE
-            WHERE ID_ESTOQUE = estoque_id;
-        END IF;
+        DELETE FROM ESTOQUE
+        WHERE ID_ESTOQUE = estoque_id;
+
         COMMIT;
     END IF;
 END //
 
 DELIMITER ;
 
-DROP procedure EXCLUIR_PRODUTO_GERAL;
 CALL EXCLUIR_PRODUTO_GERAL('UVA');
 
 
@@ -176,7 +157,7 @@ CREATE PROCEDURE PROCURAR_PRODUTO_ID(
 	IN P_ID_PRODUTO INT
 )
 BEGIN
-	IF exists (SELECT 1 FROM PRODUTO WHERE ID_PRODUTO = P_ID_PRODUTO) THEN
+	IF exists (SELECT 1 FROM PRODUTOS WHERE ID_PRODUTO = P_ID_PRODUTO) THEN
 		SELECT
 			p.ID_PRODUTO,
 			p.NOME_PRODUTO,
@@ -184,7 +165,7 @@ BEGIN
 			p.DESC_PRODUTO,
 			e.ID_ESTOQUE,
 			e.TIPO_ESTOQUE
-		FROM PRODUTO p JOIN ESTOQUE e ON p.FK_ID_ESTOQUE = e.ID_ESTOQUE WHERE p.ID_PRODUTO = P_ID_PRODUTO;
+		FROM PRODUTOS p JOIN ESTOQUE e ON p.FK_ID_ESTOQUE = e.ID_ESTOQUE WHERE p.ID_PRODUTO = P_ID_PRODUTO;
     ELSE
 		SIGNAL SQLSTATE '45000'
 		SET MESSAGE_TEXT = 'Erro: Estoque não encontrado.';
@@ -204,18 +185,17 @@ call PROCURAR_PRODUTO_ID(1);
 DELIMITER //
 CREATE PROCEDURE CONSULTAR_HISTORICO(
     IN P_ID_PRODUTO INT
-    #p_produto_id 
 )
 BEGIN
     SELECT m.*, p.NOME_PRODUTO AS nome_produto
     FROM MOVIMENTACAO m
-    JOIN PRODUTO p ON m.FK_ID_PRODUTO = p.ID_PRODUTO
+    JOIN PRODUTOS p ON m.FK_ID_PRODUTO = p.ID_PRODUTO
     WHERE m.FK_ID_PRODUTO = P_ID_PRODUTO
     ORDER BY m.DATA_MOVIMENTACAO DESC;
 END //
 DELIMITER ;
-#TESTE
 CALL CONSULTAR_HISTORICO(2);
+
 
 	#PROCEDURE GERAR RELATORIO
     
@@ -234,7 +214,7 @@ BEGIN
 END //
 DELIMITER ;
 
-CALL GERAR_RELATORIO_ESTOQUE(1);
+CALL GERAR_RELATORIO_ESTOQUE(2);
 
 
 #PROCEDURE 
@@ -259,7 +239,7 @@ CREATE PROCEDURE REGISTRAR_MOVIMENTO(
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM PRODUTO WHERE ID_PRODUTO = p_fk_id_produto) THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Erro: ID de produto inválido.';
+        SET MESSAGE_TEXT = 'Erro: ID de produto inválido ou produto não associado a um estoque.';
     ELSEIF p_qtde = 0 THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Erro: A quantidade movimentada não pode ser zero.';
@@ -267,40 +247,47 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Erro: Tipo de movimentação inválido (deve ser "entrada", "saida" ou "ajuste").';
     ELSE
+        -- Insere o registro na tabela MOVIMENTACAO
         INSERT INTO MOVIMENTACAO (FK_ID_PRODUTO, QTDE, TIPO_MOVIMENTACAO, DATA_MOVIMENTACAO)
         VALUES (p_fk_id_produto, p_qtde, p_tipo_movimentacao, CURDATE());
         
+        -- Obtém a quantidade atual do estoque
+        SELECT QTDE_ESTOQUE INTO v_qtde_atual_estoque
+        FROM ESTOQUE
+        WHERE ID_ESTOQUE = v_id_estoque;
+
+        -- Atualiza a quantidade na tabela ESTOQUE
         IF p_tipo_movimentacao = 'entrada' THEN
-            UPDATE ESTOQUE_PRODUTO
-            SET QTDE = QTDE + p_qtde
-            WHERE FK_ID_PRODUTO = p_fk_id_produto;
+            UPDATE ESTOQUE
+            SET QTDE_ESTOQUE = QTDE_ESTOQUE + p_qtde
+            WHERE ID_ESTOQUE = v_id_estoque;
 
         ELSEIF p_tipo_movimentacao = 'saida' THEN
-            UPDATE ESTOQUE_PRODUTO
-            SET QTDE = QTDE - p_qtde
-            WHERE FK_ID_PRODUTO = p_fk_id_produto AND QTDE >= p_qtde;
-            IF ROW_COUNT() = 0 THEN
+            IF v_qtde_atual_estoque < p_qtde THEN
                 SIGNAL SQLSTATE '45000'
                 SET MESSAGE_TEXT = 'Erro: Quantidade insuficiente em estoque para realizar a saída.';
+            ELSE
+                UPDATE ESTOQUE
+                SET QTDE_ESTOQUE = QTDE_ESTOQUE - p_qtde
+                WHERE ID_ESTOQUE = v_id_estoque;
             END IF;
-         ELSEIF p_tipo_movimentacao = 'ajuste' THEN
-            UPDATE ESTOQUE_PRODUTO
-            SET QTDE = QTDE + p_qtde
-			WHERE FK_ID_PRODUTO = p_fk_id_produto;
+        ELSEIF p_tipo_movimentacao = 'ajuste' THEN
+            -- Para ajuste, estamos adicionando a quantidade. Se for um ajuste para baixo, p_qtde deve ser negativo.
+            UPDATE ESTOQUE
+            SET QTDE_ESTOQUE = QTDE_ESTOQUE + p_qtde
+            WHERE ID_ESTOQUE = v_id_estoque;
         END IF;
     END IF;
 END //
 DELIMITER ;
 
-	-- IN p_fk_id_produto INT,
-    -- IN p_qtde INT,
-     -- IN p_tipo_movimentacao VARCHAR(255)
-    
 CALL REGISTRAR_MOVIMENTO(
 2, -- p_fk_id_produto
 3, -- p_qtde
-'saida' -- p_tipo_movimentacao
+'entrada' -- p_tipo_movimentacao
 );
+
+
 SELECT *FROM PRODUTO;
 SELECT *FROM ESTOQUE_PRODUTO;
 SELECT *FROM ESTOQUE;
@@ -340,7 +327,7 @@ BEGIN
     START TRANSACTION;
 
     SELECT ID_PRODUTO, FK_ID_ESTOQUE INTO V_ID_PRODUTO, V_ID_ESTOQUE
-    FROM PRODUTO
+    FROM PRODUTOS
     WHERE NOME_PRODUTO = P_NOME_PRODUTO;
 
     IF V_ID_PRODUTO IS NOT NULL THEN
@@ -357,14 +344,14 @@ BEGIN
             SET QTDE_ESTOQUE = QTDE_ESTOQUE + P_QTDE_ESTOQUE
             WHERE ID_ESTOQUE = V_ID_ESTOQUE;
 
-            INSERT INTO PRODUTO(NOME_PRODUTO, PRECO_PRODUTO, FK_ID_ESTOQUE, DESC_PRODUTO)
+            INSERT INTO PRODUTOS(NOME_PRODUTO, PRECO_PRODUTO, FK_ID_ESTOQUE, DESC_PRODUTO)
             VALUES(P_NOME_PRODUTO, P_PRECO_PRODUTO, V_ID_ESTOQUE, P_DESC_PRODUTO);
         ELSE
             INSERT INTO ESTOQUE(TIPO_ESTOQUE, QTDE_ESTOQUE)
             VALUES(P_TIPO_ESTOQUE, P_QTDE_ESTOQUE);
             SET V_ID_ESTOQUE = LAST_INSERT_ID();
 
-            INSERT INTO PRODUTO(NOME_PRODUTO, PRECO_PRODUTO, FK_ID_ESTOQUE, DESC_PRODUTO)
+            INSERT INTO PRODUTOS(NOME_PRODUTO, PRECO_PRODUTO, FK_ID_ESTOQUE, DESC_PRODUTO)
             VALUES(P_NOME_PRODUTO, P_PRECO_PRODUTO, V_ID_ESTOQUE, P_DESC_PRODUTO);
         END IF;
     END IF;
@@ -374,14 +361,19 @@ END //
 DELIMITER ;
 CALL CADASTRAR_PRODUTO_ESTOQUE('MAÇA', 22.50, 'MAÇA MUITO SUCULENTA', 'MAÇA', 400 );
 
+	#LISTAR PRODUTOS
 DELIMITER //
+
 CREATE PROCEDURE LISTAR_PRODUTOS()
 BEGIN
-	SELECT p.NOME_PRODUTO, p.PRECO_PRODUTO, p.DESC_PRODUTO, p.FK_ID_ESTOQUE, e.TIPO_ESTOQUE, e.QTDE_ESTOQUE
-	FROM PRODUTO p
-	LEFT JOIN ESTOQUE e ON e.ID_ESTOQUE = p.FK_ID_ESTOQUE;
+    SELECT * FROM PRODUTOS;
 END //
+
 DELIMITER ;
+
+#TESTE
+CALL LISTAR_PRODUTOS();
+SELECT *FROM PRODUTOS;
 
 
     # NOTIFICAÇÃO DE FALTA DE PRODUTO
@@ -395,7 +387,7 @@ CREATE PROCEDURE NOTIFICACAO_FALTA_PRODUTO(
 BEGIN
     DECLARE V_QTDE_ESTOQUE INT;
     SELECT ESTOQUE.QTDE_ESTOQUE INTO V_QTDE_ESTOQUE
-    FROM PRODUTO
+    FROM PRODUTOS
     JOIN ESTOQUE ON PRODUTO.FK_ID_ESTOQUE = ESTOQUE.ID_ESTOQUE
     WHERE PRODUTO.NOME_PRODUTO = P_NOME_PRODUTO;
 
@@ -429,7 +421,7 @@ BEGIN
     DECLARE V_ID_ESTOQUE INT;
 	DECLARE V_ID_PRODUTO INT;
     
-	SELECT ID_PRODUTO INTO V_ID_PRODUTO FROM PRODUTO WHERE NOME_PRODUTO = P_NOME_PRODUTO;
+	SELECT ID_PRODUTO INTO V_ID_PRODUTO FROM PRODUTOS WHERE NOME_PRODUTO = P_NOME_PRODUTO;
     
 	IF V_ID_PRODUTO IS NULL THEN
 		SET MSG_RES = 'PRODUTO NÃO ENCONTRADO';

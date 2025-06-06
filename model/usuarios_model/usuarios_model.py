@@ -4,14 +4,14 @@ import mysql.connector
 from mysql.connector import Error
 
 def conectar():
-    return mysql.connector.connect(host='localhost', user='root', password='', database='db')
+    return mysql.connector.connect(host='localhost', user='root', password='962266514', database='db')
 
-def cadastrar_usuario(NOME_USUARIO, EMAIL_USUARIO, SENHA_USUARIO, TIPO_CONTA):
+def cadastrar_usuario(EMAIL_USUARIO, SENHA_USUARIO):
     try:
         db = conectar()
         cursor = db.cursor()
-        cursor.execute("CALL CADASTRAR_USUARIO(%s, %s, %s, %s)", 
-                       (NOME_USUARIO, EMAIL_USUARIO, SENHA_USUARIO, TIPO_CONTA))
+        cursor.execute("CALL CADASTRAR_USUARIO(%s, %s)", 
+                       ( EMAIL_USUARIO, SENHA_USUARIO))
         db.commit()
         return True
     except Exception as e:
@@ -35,12 +35,12 @@ def excluir_usuario_id(ID_USUARIO):
 
 
 
-def alterar_usuario(ID_USUARIO, NOME_USUARIO, EMAIL_USUARIO, SENHA_USUARIO):
+def alterar_usuario(ID_USUARIO, EMAIL_USUARIO, SENHA_USUARIO):
     try:
         db = conectar()
         cursor = db.cursor()
-        cursor.execute("CALL ALTERAR_USUARIO(%s, %s, %s, %s)",
-                       (ID_USUARIO, NOME_USUARIO, EMAIL_USUARIO, SENHA_USUARIO))
+        cursor.execute("CALL ALTERAR_USUARIO(%s, %s, %s)",
+                       (ID_USUARIO, EMAIL_USUARIO, SENHA_USUARIO))
         db.commit()
         return {"message": "Usuário alterado com sucesso."}
     except Exception as e:
@@ -77,9 +77,7 @@ def fazer_login(EMAIL_USUARIO, SENHA_USUARIO):
             return {
                 "user": {
                     "id": result["ID_USUARIO"],
-                    "nome": result["NOME_USUARIO"],
-                    "email": result["EMAIL_USUARIO"],
-                    "tipo_conta": result["TIPO_CONTA"]
+                    "email": result["EMAIL_USUARIO"]
                 }
             }
         else:
