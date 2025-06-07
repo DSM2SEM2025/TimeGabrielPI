@@ -3,25 +3,42 @@ from model.produtos_model.produtos_model import (
     PROCURAR_PRODUTO_ID,
     ATUALIZAR_PRODUTO,
     EXCLUIR_PRODUTO_GERAL,
-    LISTAR_PRODUTOS
+    LISTAR_PRODUTOS,
+    coleta_de_dados_email
 )
 
-def insert_produto_controller(NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, TIPO_PRODUTO, QTDE_ESTOQUE):
-    return CADASTRAR_PRODUTO_ESTOQUE(NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, TIPO_PRODUTO, QTDE_ESTOQUE)
+def insert_produto_controller(NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, TIPO_PRODUTO, QTDE_ESTOQUE, NUMERO_NF_PRODUTO):
+    return CADASTRAR_PRODUTO_ESTOQUE(NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, TIPO_PRODUTO, QTDE_ESTOQUE, NUMERO_NF_PRODUTO)
 
-
-def delete_produto_controller(id_produto: int):
-    validation, resultado = PROCURAR_PRODUTO_ID(id_produto)
-    if validation:
-        return EXCLUIR_PRODUTO_GERAL(id_produto)
-    else:
-        return (False, resultado)
-
-
-def update_produto_controller(NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, TIPO_ESTOQUE, QTDE_ESTOQUE, TIPO_ATUALIZACAO):
-    validation, _ = PROCURAR_PRODUTO_ID(NOME_PRODUTO)
+def delete_produto_estoque_controller(id_estoque: int):
+    # validation, resultado = PROCURAR_PRODUTO_ID(id_produto)
+    # if validation:
+    #     return EXCLUIR_PRODUTO_GERAL(id_produto)
+    # else:
+    #     return (False, resultado)
+    return EXCLUIR_PRODUTO_GERAL(id_estoque)
     
-    return ATUALIZAR_PRODUTO(NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, TIPO_ESTOQUE, QTDE_ESTOQUE, TIPO_ATUALIZACAO)
+
+
+def update_produto_controller(p_id_estoque_upd=None,p_tipo_estoque_upd=None,p_qtde_estoque_upd=None,     
+        p_id_produto_upd=None,       
+        p_nome_produto_upd=None,     
+        p_preco_produto_upd=None,    
+        p_fk_id_estoque_upd=None,    
+        p_desc_produto_upd=None,     
+        p_numero_nf_produto_upd=None 
+    ):    
+    return ATUALIZAR_PRODUTO(p_id_estoque_upd,
+            p_tipo_estoque_upd,
+            p_qtde_estoque_upd,
+            p_id_produto_upd,
+            p_nome_produto_upd,
+            p_preco_produto_upd,
+            p_fk_id_estoque_upd,
+            p_desc_produto_upd,
+            p_numero_nf_produto_upd)
+
+# print(update_produto_controller(2, "teste novo estoque", 2000))
 
 
 def search_produto_controller(ID_PRODUTO):
@@ -32,6 +49,9 @@ def search_produto_controller(ID_PRODUTO):
 def list_produto_estoque():
     return LISTAR_PRODUTOS()
 
-
 # Exemplo de teste (descomente para usar)
 # print(search_produto_controller(1))
+
+
+def iniciar_coleta_email_controller():
+    return coleta_de_dados_email()

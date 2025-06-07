@@ -318,11 +318,18 @@ CREATE PROCEDURE CADASTRAR_PRODUTO_ESTOQUE(
     IN P_PRECO_PRODUTO FLOAT,
     IN P_DESC_PRODUTO VARCHAR(255),
     IN P_TIPO_ESTOQUE VARCHAR(255),
-    IN P_QTDE_ESTOQUE INT
+    IN P_QTDE_ESTOQUE INT,
+    IN P_NUMERO_NF_PRODUTO VARCHAR(255) 
 )
 BEGIN
     DECLARE V_ID_PRODUTO INT;
     DECLARE V_ID_ESTOQUE INT;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
 
     START TRANSACTION;
 
@@ -334,32 +341,52 @@ BEGIN
         UPDATE ESTOQUE
         SET QTDE_ESTOQUE = QTDE_ESTOQUE + P_QTDE_ESTOQUE
         WHERE ID_ESTOQUE = V_ID_ESTOQUE;
+
     ELSE
         SELECT ID_ESTOQUE INTO V_ID_ESTOQUE
         FROM ESTOQUE
-        WHERE TIPO_ESTOQUE = LOWER(P_TIPO_ESTOQUE);
+        WHERE TIPO_ESTOQUE = LOWER(P_TIPO_ESTOQUE); 
 
         IF V_ID_ESTOQUE IS NOT NULL THEN
             UPDATE ESTOQUE
             SET QTDE_ESTOQUE = QTDE_ESTOQUE + P_QTDE_ESTOQUE
             WHERE ID_ESTOQUE = V_ID_ESTOQUE;
 
-            INSERT INTO PRODUTOS(NOME_PRODUTO, PRECO_PRODUTO, FK_ID_ESTOQUE, DESC_PRODUTO)
-            VALUES(P_NOME_PRODUTO, P_PRECO_PRODUTO, V_ID_ESTOQUE, P_DESC_PRODUTO);
+            INSERT INTO PRODUTOS(NOME_PRODUTO, PRECO_PRODUTO, FK_ID_ESTOQUE, DESC_PRODUTO, NUMERO_NF_PRODUTO) 
+            VALUES(P_NOME_PRODUTO, P_PRECO_PRODUTO, V_ID_ESTOQUE, P_DESC_PRODUTO, P_NUMERO_NF_PRODUTO);
+
         ELSE
             INSERT INTO ESTOQUE(TIPO_ESTOQUE, QTDE_ESTOQUE)
             VALUES(P_TIPO_ESTOQUE, P_QTDE_ESTOQUE);
+            
             SET V_ID_ESTOQUE = LAST_INSERT_ID();
 
-            INSERT INTO PRODUTOS(NOME_PRODUTO, PRECO_PRODUTO, FK_ID_ESTOQUE, DESC_PRODUTO)
-            VALUES(P_NOME_PRODUTO, P_PRECO_PRODUTO, V_ID_ESTOQUE, P_DESC_PRODUTO);
+            INSERT INTO PRODUTOS(NOME_PRODUTO, PRECO_PRODUTO, FK_ID_ESTOQUE, DESC_PRODUTO, NUMERO_NF_PRODUTO)
+            VALUES(P_NOME_PRODUTO, P_PRECO_PRODUTO, V_ID_ESTOQUE, P_DESC_PRODUTO, P_NUMERO_NF_PRODUTO);
         END IF;
     END IF;
 
-    COMMIT;
-END //
+    COMMIT; -- Confirma a transação
+END//
 DELIMITER ;
-CALL CADASTRAR_PRODUTO_ESTOQUE('MAÇA', 22.50, 'MAÇA MUITO SUCULENTA', 'MAÇA', 400 );
+CALL CADASTRAR_PRODUTO_ESTOQUE(
+    'Teclado Mecânico',   -- P_NOME_PRODUTO (produto existente)
+    250.00,               -- P_PRECO_PRODUTO (este valor não é usado na atualização do produto existente)
+    'Teclado RGB com switches azuis', -- P_DESC_PRODUTO (este valor não é usado na atualização do produto existente)
+    'Eletrônicos',        -- P_TIPO_ESTOQUE (usado para encontrar o estoque se o produto fosse novo)
+    20,                   -- P_QTDE_ESTOQUE (adiciona 20 à quantidade atual do estoque)
+    'NF-XXXX-00000'       -- P_NUMERO_NF_PRODUTO (este valor não é usado na atualização do produto existente)
+);
+CALL CADASTRAR_PRODUTO_ESTOQUE(
+    'Mouse Gamer',        -- P_NOME_PRODUTO (novo produto)
+    120.00,               -- P_PRECO_PRODUTO
+    'Mouse óptico com 6 botões programáveis', -- P_DESC_PRODUTO
+    'Eletrônicos',        -- P_TIPO_ESTOQUE (estoque existente)
+    100,                  -- P_QTDE_ESTOQUE (adiciona a quantidade ao estoque existente)
+    'NF-2025-00124'       -- P_NUMERO_NF_PRODUTO (novo)
+);
+
+
 
 	#LISTAR PRODUTOS
 DELIMITER //
@@ -408,64 +435,77 @@ call NOTIFICACAO_FALTA_PRODUTO('MAÇA', 500, 5000)
 ---    #ATUALIZAR PRODUTO
 
 delimiter //
-CREATE PROCEDURE ATUALIZAR_PRODUTO(
-	IN P_NOME_PRODUTO VARCHAR(255),
-    IN P_PRECO_PRODUTO FLOAT,
-    IN P_DESC_PRODUTO VARCHAR(255),
-    IN P_TIPO_ESTOQUE VARCHAR(255),
-	IN P_QTDE_ESTOQUE INT,
-    IN TIPO_ATUALIZACAO INT
+CREATE PROCEDURE ATUALIZAR_ESTOQUE_PRODUTO(
+-- Parâmetros para ESTOQUE (opcionais)
+IN p_id_estoque_upd INT,
+IN p_tipo_estoque_upd VARCHAR(255),
+IN p_qtde_estoque_upd INT,
+
+-- Parâmetros para PRODUTOS (opcionais)
+IN p_id_produto_upd INT,
+IN p_nome_produto_upd VARCHAR(255),
+IN p_preco_produto_upd FLOAT,
+IN p_fk_id_estoque_upd INT,
+IN p_desc_produto_upd VARCHAR(255),
+IN p_numero_nf_produto_upd VARCHAR(255)
 )
 BEGIN
-	DECLARE MSG_RES VARCHAR(50);
-    DECLARE V_ID_ESTOQUE INT;
-	DECLARE V_ID_PRODUTO INT;
-    
-	SELECT ID_PRODUTO INTO V_ID_PRODUTO FROM PRODUTOS WHERE NOME_PRODUTO = P_NOME_PRODUTO;
-    
-	IF V_ID_PRODUTO IS NULL THEN
-		SET MSG_RES = 'PRODUTO NÃO ENCONTRADO';
-	ELSE 
-		SELECT ID_ESTOQUE INTO V_ID_ESTOQUE FROM ESTOQUE WHERE TIPO_ESTOQUE = P_TIPO_ESTOQUE;
-		IF V_ID_ESTOQUE IS NULL AND TIPO_ATUALIZACAO = 1 THEN
-			SET MSG_RES = 'TIPO DE ESTOQUE NÃO ENCONTRADO';
-		ELSEIF TIPO_ATUALIZACAO = 1 THEN
-			START TRANSACTION;
-			UPDATE ESTOQUE 
-            SET 
-				TIPO_ESTOQUE = P_TIPO_ESTOQUE, 
-				QTDE_ESTOQUE = P_QTDE_ESTOQUE WHERE ID_ESTOQUE = V_ID_ESTOQUE;
-                
-            UPDATE PRODUTO 
-            SET 
-				NOME_PRODUTO = P_NOME_PRODUTO,
-                PRECO_PRODUTO = P_PRECO_PRODUTO,
-                DESC_PRODUTO =  P_DESC_PRODUTO WHERE ID_PRODUTO = V_ID_PRODUTO;
-                
-            SET MSG_RES = 'ALTERAÇÃO FEITA COM SUCESSO NO PRODUTO E SEU ESTOQUE.';
-			COMMIT;
-        ELSEIF TIPO_ATUALIZACAO = 2 THEN
-				UPDATE PRODUTO SET 
-					NOME_PRODUTO = P_NOME_PRODUTO,
-					PRECO_PRODUTO = P_PRECO_PRODUTO,
-					DESC_PRODUTO =  P_DESC_PRODUTO WHERE ID_PRODUTO = V_ID_PRODUTO;
-			SET MSG_RES = 'ALTERAÇÃO FEITA COM SUCESSO NO PRODUTO.';
-            COMMIT;
-        ELSE
-			SET MSG_RES = 'OPÇÃO INVALIDA';
-		END IF;
-	END IF;
-	SELECT MSG_RES;
-END //
+-- Handler de erro para reverter transação em caso de exceção SQL
+DECLARE EXIT HANDLER FOR SQLEXCEPTION
+BEGIN
+ROLLBACK; 
+RESIGNAL; 
+END;
+
+START TRANSACTION;
+
+IF p_id_estoque_upd IS NOT NULL THEN
+UPDATE ESTOQUE
+SET
+    TIPO_ESTOQUE = COALESCE(p_tipo_estoque_upd, TIPO_ESTOQUE), 
+    QTDE_ESTOQUE = COALESCE(p_qtde_estoque_upd, QTDE_ESTOQUE)
+WHERE ID_ESTOQUE = p_id_estoque_upd;
+END IF;
+
+-- Atualiza o PRODUTO se um ID de produto for fornecido
+IF p_id_produto_upd IS NOT NULL THEN
+UPDATE PRODUTOS
+SET
+    NOME_PRODUTO = COALESCE(p_nome_produto_upd, NOME_PRODUTO),
+    PRECO_PRODUTO = COALESCE(p_preco_produto_upd, PRECO_PRODUTO),
+    FK_ID_ESTOQUE = COALESCE(p_fk_id_estoque_upd, FK_ID_ESTOQUE),
+    DESC_PRODUTO = COALESCE(p_desc_produto_upd, DESC_PRODUTO),
+    NUMERO_NF_PRODUTO = COALESCE(p_numero_nf_produto_upd, NUMERO_NF_PRODUTO)
+WHERE ID_PRODUTO = p_id_produto_upd;
+END IF;
+
+COMMIT;
+
+END  //
 DELIMITER ;
 
 select *from produto;
 
-call ATUALIZAR_PRODUTO(
-'maça',
-10,
-'teste de update',
-'mamaco',
-1000, -- pode ser null caso n queira atualizar a qtde, fazer isso no back-end
-1
+
+CALL ATUALIZAR_ESTOQUE_PRODUTO(
+    NULL, NULL, NULL, -- Parâmetros do estoque como NULL
+    101,                      -- p_id_produto_upd (ID do Produto)
+    'Monitor Gamer 27"',     -- p_nome_produto_upd
+    1599.99,                  -- p_preco_produto_upd
+    5,                        -- p_fk_id_estoque_upd (ID de um estoque existente, ou NULL)
+    'QHD, 144Hz, Freesync',   -- p_desc_produto_upd
+    'NF-MONITOR-001'          -- p_numero_nf_produto_upd
+);
+
+
+CALL ATUALIZAR_ESTOQUE_PRODUTO(
+    1,                         -- p_id_estoque_upd
+    'Novo Tipo Estoque X',     -- p_tipo_estoque_upd
+    1500,                      -- p_qtde_estoque_upd
+    101,                       -- p_id_produto_upd
+    'Cadeira Gamer Pro',       -- p_nome_produto_upd
+    799.99,                    -- p_preco_produto_upd
+    1,                         -- p_fk_id_estoque_upd (vinculando ao estoque atualizado, por exemplo)
+    'Cadeira ergonômica com ajuste total', -- p_desc_produto_upd
+    'NF-CADEIRA-002'           -- p_numero_nf_produto_upd
 );

@@ -32,11 +32,18 @@ class DBModel(BaseModel):
             port=int(os.getenv("port", 3306)),
             sid=os.getenv("sid")
         )
+    @classmethod
+    def get_dotenv_create_db(cls, dotenv_path: Optional[str] = ".env") -> "DBModel":
+        load_dotenv(dotenv_path="database/.env")
+        return cls(
+            host=os.getenv("host"),
+            user=os.getenv("user"),
+            password=os.getenv("password")
+        )
 
 class DataBaseConnector(Protocol):
     def connect(self)->bool:
         ...
     def disconect(self)->None:
         ...
-
 

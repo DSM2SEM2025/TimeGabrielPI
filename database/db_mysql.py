@@ -22,7 +22,19 @@ class MySqlConnector(DataBaseConnector):
             return self.conn, f'Conexão com mysql bem-sucedida'
         except Error as err:
             print(f"Erro ao conectar ao MySQL: {err}")
-            return None, f'Erro ao conectar {err}'      
+            return None, f'Erro ao conectar {err}'
+        
+    def connection_mysql(self):
+        try:
+            self.conn = connect(
+                user = self.db_config.user,
+                password = self.db_config.password,
+                host = self.db_config.host
+            )
+        except Error as err:
+            print(f"Erro ao conectar ao MySQL: {err}")
+            return None, f'Erro ao conectar {err}'   
+          
     def disconnect(self):
         if self.conn and self.conn.is_connected():
             self.conn.close()

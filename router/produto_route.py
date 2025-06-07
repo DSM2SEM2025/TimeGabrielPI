@@ -6,8 +6,9 @@ from controller.produtos_controller.produtos_controller import (
     insert_produto_controller,
     update_produto_controller,
     search_produto_controller,
-    delete_produto_controller,
-    list_produto_estoque
+    delete_produto_estoque_controller,
+    list_produto_estoque,
+    iniciar_coleta_email_controller
 )
 
 router = APIRouter()
@@ -16,6 +17,7 @@ class Produto(BaseModel):
     nome_produto: str
     preco_produto: float  
     desc_produto: str
+    numero_nf_produto:str
 
 class Estoque(BaseModel):
     tipo_estoque: str
@@ -41,7 +43,8 @@ def cadastrar_produto_router(produto: Produto, estoque: Estoque, usuario=Depends
             produto.preco_produto,
             produto.desc_produto,
             estoque.tipo_estoque,
-            estoque.qtde_estoque
+            estoque.qtde_estoque,
+            produto.numero_nf_produto
         )
         return {"message": "Produto e estoque cadastrados com sucesso!"}
     except Exception as err:
@@ -65,7 +68,7 @@ def list_produto_router(usuario=Depends(pegar_usuario)):
 @router.delete("/produto/{id}", status_code=200, summary="Excluir produto pelo ID")
 #def excluir_produto_router(id: int):
 def excluir_produto_router(id: int, usuario=Depends(pegar_usuario)):
-    result = delete_produto_controller(id)
+    result = delete_produto_estoque_controller(id)
     if result[0]:  # Excluído com sucesso
         return {"message": f"Produto com ID '{id}' excluído com sucesso."}
     else:
@@ -83,3 +86,11 @@ def atualizar_produto_router(produto: ProdutoUpdate, usuario=Depends(pegar_usuar
         produto.tipo_atualizacao
     )
     return {"message": "Produto atualizado com sucesso."}
+
+@router.get("/coleta-email", summary="Coleta dados de e-mails do Gmail com anexos PDF")
+def coleta_email_router(usuario=Depends(pegar_usuario)):
+    try:
+        result = iniciar_coleta_email_controller()
+        return {"message": "Coleta de e-mail concluída", "resultado": str(result)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro na coleta de e-mails: {e}")

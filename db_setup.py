@@ -8,7 +8,7 @@ def criar_banco_de_dados():
         connection = mysql.connector.connect(host='localhost', user='root', password='')
 
         cursor = connection.cursor()
-        cursor.execute("CREATE DATABASE IF NOT EXISTS db")
+        cursor.execute("CREATE DATABASE IF NOT EXISTS db;")
         print("Banco de dados criado ou já existente.")
     except Error as e:
         print(f"Erro ao criar banco de dados: {e}")
@@ -33,7 +33,7 @@ def criar_tabelas():
             DATA_CADASTRO DATE DEFAULT NULL,
             DATA_ATUALIZACAO DATE DEFAULT NULL,
             CONSTRAINT CHK_SENHA_TAMANHO CHECK (LENGTH(SENHA_USUARIO) >= 3)
-        );
+        )
         ''')
         
         # Tabela de estoque
@@ -53,6 +53,7 @@ def criar_tabelas():
         PRECO_PRODUTO FLOAT NOT NULL,
         FK_ID_ESTOQUE INT DEFAULT NULL,
 	    DESC_PRODUTO VARCHAR(255) NULL,
+        NUMERO_NF_PRODUTO VARCHAR(255) NULL UNIQUE,
         FOREIGN KEY (FK_ID_ESTOQUE) REFERENCES ESTOQUE(ID_ESTOQUE) ON DELETE SET NULL
         );               
         ''')
@@ -85,8 +86,8 @@ def criar_tabelas():
         # Procedure de cadastrar usuário
         cursor.execute('''
         CREATE PROCEDURE CADASTRAR_USUARIO(
-        IN P_EMAIL_USUARIO VARCHAR(100),
-        IN P_SENHA_USUARIO VARCHAR(100)
+        IN P_EMAIL_USUARIO VARCHAR(255),
+        IN P_SENHA_USUARIO VARCHAR(255)
         )
         BEGIN
         INSERT INTO USUARIO (EMAIL_USUARIO, SENHA_USUARIO)
@@ -99,6 +100,7 @@ def criar_tabelas():
         CREATE PROCEDURE EXCLUIR_USUARIO_ID( IN P_ID_USUARIO INT)
         BEGIN
         -- Verificar se o usuário existe
+        DECLARE message_text VARChAR(100);
         IF NOT EXISTS (SELECT 1 FROM USUARIO WHERE ID_USUARIO = P_ID_USUARIO) THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Erro: Usuário não encontrado.';
@@ -148,110 +150,121 @@ def criar_tabelas():
         #procedure cadastrar produto no estoque
         cursor.execute('''
         CREATE PROCEDURE CADASTRAR_PRODUTO_ESTOQUE(
-        IN P_NOME_PRODUTO VARCHAR(255),
-        IN P_PRECO_PRODUTO FLOAT,
-        IN P_DESC_PRODUTO VARCHAR(255),
-        IN P_TIPO_ESTOQUE VARCHAR(255),
-        IN P_QTDE_ESTOQUE INT
-        )
-        BEGIN
-        DECLARE V_ID_PRODUTO INT;
-        DECLARE V_ID_ESTOQUE INT;
-
-        START TRANSACTION;
-
-        SELECT ID_PRODUTO, FK_ID_ESTOQUE INTO V_ID_PRODUTO, V_ID_ESTOQUE
-        FROM PRODUTOS
-        WHERE NOME_PRODUTO = P_NOME_PRODUTO;
-
-        IF V_ID_PRODUTO IS NOT NULL THEN
-        UPDATE ESTOQUE
-        SET QTDE_ESTOQUE = QTDE_ESTOQUE + P_QTDE_ESTOQUE
-        WHERE ID_ESTOQUE = V_ID_ESTOQUE;
-        ELSE
-        SELECT ID_ESTOQUE INTO V_ID_ESTOQUE
-        FROM ESTOQUE
-        WHERE TIPO_ESTOQUE = LOWER(P_TIPO_ESTOQUE);
-
-        IF V_ID_ESTOQUE IS NOT NULL THEN
-        UPDATE ESTOQUE
-        SET QTDE_ESTOQUE = QTDE_ESTOQUE + P_QTDE_ESTOQUE
-        WHERE ID_ESTOQUE = V_ID_ESTOQUE;
-
-        INSERT INTO PRODUTOS(NOME_PRODUTO, PRECO_PRODUTO, FK_ID_ESTOQUE, DESC_PRODUTO)
-        VALUES(P_NOME_PRODUTO, P_PRECO_PRODUTO, V_ID_ESTOQUE, P_DESC_PRODUTO);
-        ELSE
-        INSERT INTO ESTOQUE(TIPO_ESTOQUE, QTDE_ESTOQUE)
-        VALUES(P_TIPO_ESTOQUE, P_QTDE_ESTOQUE);
-        SET V_ID_ESTOQUE = LAST_INSERT_ID();
-
-        INSERT INTO PRODUTOS(NOME_PRODUTO, PRECO_PRODUTO, FK_ID_ESTOQUE, DESC_PRODUTO)
-        VALUES(P_NOME_PRODUTO, P_PRECO_PRODUTO, V_ID_ESTOQUE, P_DESC_PRODUTO);
-        END IF;
-        END IF;
-
-        COMMIT;
-        END
-        ''')
-        
-        #procedure de atualizar produto
-        cursor.execute('''
-        CREATE PROCEDURE ATUALIZAR_PRODUTO(
             IN P_NOME_PRODUTO VARCHAR(255),
             IN P_PRECO_PRODUTO FLOAT,
             IN P_DESC_PRODUTO VARCHAR(255),
             IN P_TIPO_ESTOQUE VARCHAR(255),
             IN P_QTDE_ESTOQUE INT,
-            IN TIPO_ATUALIZACAO INT
+            IN P_NUMERO_NF_PRODUTO VARCHAR(255) 
         )
         BEGIN
-            DECLARE MSG_RES VARCHAR(100);
-            DECLARE V_ID_ESTOQUE INT;
             DECLARE V_ID_PRODUTO INT;
-            
-            SELECT ID_PRODUTO INTO V_ID_PRODUTO FROM PRODUTOS WHERE NOME_PRODUTO = P_NOME_PRODUTO;
-            
-            IF V_ID_PRODUTO IS NULL THEN
-                SET MSG_RES = 'PRODUTO NÃO ENCONTRADO';
-            ELSE 
-                SELECT ID_ESTOQUE INTO V_ID_ESTOQUE FROM ESTOQUE WHERE TIPO_ESTOQUE = P_TIPO_ESTOQUE;
-                IF V_ID_ESTOQUE IS NULL AND TIPO_ATUALIZACAO = 1 THEN
-                    SET MSG_RES = 'TIPO DE ESTOQUE NÃO ENCONTRADO';
-                ELSEIF TIPO_ATUALIZACAO = 1 THEN
-                    START TRANSACTION;
-                    UPDATE ESTOQUE 
-                    SET 
-                        TIPO_ESTOQUE = P_TIPO_ESTOQUE, 
-                        QTDE_ESTOQUE = P_QTDE_ESTOQUE WHERE ID_ESTOQUE = V_ID_ESTOQUE;
-                        
-                    UPDATE PRODUTOS
-                    SET 
-                        NOME_PRODUTO = P_NOME_PRODUTO,
-                        PRECO_PRODUTO = P_PRECO_PRODUTO,
-                        DESC_PRODUTO =  P_DESC_PRODUTO WHERE ID_PRODUTO = V_ID_PRODUTO;
-                        
-                    SET MSG_RES = 'ALTERAÇÃO FEITA COM SUCESSO NO PRODUTO E SEU ESTOQUE.';
-                    COMMIT;
-                ELSEIF TIPO_ATUALIZACAO = 2 THEN
-                        UPDATE PRODUTOS SET 
-                            NOME_PRODUTO = P_NOME_PRODUTO,
-                            PRECO_PRODUTO = P_PRECO_PRODUTO,
-                            DESC_PRODUTO =  P_DESC_PRODUTO WHERE ID_PRODUTO = V_ID_PRODUTO;
-                    SET MSG_RES = 'ALTERAÇÃO FEITA COM SUCESSO NO PRODUTO.';
-                    COMMIT;
+            DECLARE V_ID_ESTOQUE INT;
+
+            DECLARE EXIT HANDLER FOR SQLEXCEPTION
+            BEGIN
+                ROLLBACK;
+                RESIGNAL;
+            END;
+
+            START TRANSACTION;
+
+            SELECT ID_PRODUTO, FK_ID_ESTOQUE INTO V_ID_PRODUTO, V_ID_ESTOQUE
+            FROM PRODUTOS
+            WHERE NOME_PRODUTO = P_NOME_PRODUTO;
+
+            IF V_ID_PRODUTO IS NOT NULL THEN
+                UPDATE ESTOQUE
+                SET QTDE_ESTOQUE = QTDE_ESTOQUE + P_QTDE_ESTOQUE
+                WHERE ID_ESTOQUE = V_ID_ESTOQUE;
+
+            ELSE
+                SELECT ID_ESTOQUE INTO V_ID_ESTOQUE
+                FROM ESTOQUE
+                WHERE TIPO_ESTOQUE = LOWER(P_TIPO_ESTOQUE); 
+
+                IF V_ID_ESTOQUE IS NOT NULL THEN
+                    UPDATE ESTOQUE
+                    SET QTDE_ESTOQUE = QTDE_ESTOQUE + P_QTDE_ESTOQUE
+                    WHERE ID_ESTOQUE = V_ID_ESTOQUE;
+
+                    INSERT INTO PRODUTOS(NOME_PRODUTO, PRECO_PRODUTO, FK_ID_ESTOQUE, DESC_PRODUTO, NUMERO_NF_PRODUTO) 
+                    VALUES(P_NOME_PRODUTO, P_PRECO_PRODUTO, V_ID_ESTOQUE, P_DESC_PRODUTO, P_NUMERO_NF_PRODUTO);
+
                 ELSE
-                    SET MSG_RES = 'OPÇÃO INVALIDA';
+                    INSERT INTO ESTOQUE(TIPO_ESTOQUE, QTDE_ESTOQUE)
+                    VALUES(P_TIPO_ESTOQUE, P_QTDE_ESTOQUE);
+                    
+                    SET V_ID_ESTOQUE = LAST_INSERT_ID();
+
+                    INSERT INTO PRODUTOS(NOME_PRODUTO, PRECO_PRODUTO, FK_ID_ESTOQUE, DESC_PRODUTO, NUMERO_NF_PRODUTO)
+                    VALUES(P_NOME_PRODUTO, P_PRECO_PRODUTO, V_ID_ESTOQUE, P_DESC_PRODUTO, P_NUMERO_NF_PRODUTO);
                 END IF;
             END IF;
-            SELECT MSG_RES;
-        END
+
+            COMMIT; -- Confirma a transação
+        END 
+
+        ''')
+        
+        #procedure de atualizar produto
+        cursor.execute('''
+        CREATE PROCEDURE ATUALIZAR_ESTOQUE_PRODUTO(
+            -- Parâmetros para ESTOQUE (opcionais)
+            IN p_id_estoque_upd INT,
+            IN p_tipo_estoque_upd VARCHAR(255),
+            IN p_qtde_estoque_upd INT,
+
+            -- Parâmetros para PRODUTOS (opcionais)
+            IN p_id_produto_upd INT,
+            IN p_nome_produto_upd VARCHAR(255),
+            IN p_preco_produto_upd FLOAT,
+            IN p_fk_id_estoque_upd INT,
+            IN p_desc_produto_upd VARCHAR(255),
+            IN p_numero_nf_produto_upd VARCHAR(255)
+        )
+        BEGIN
+            -- Handler de erro para reverter transação em caso de exceção SQL
+            DECLARE EXIT HANDLER FOR SQLEXCEPTION
+            BEGIN
+                ROLLBACK; 
+                RESIGNAL; 
+            END;
+
+            START TRANSACTION;
+
+            IF p_id_estoque_upd IS NOT NULL THEN
+                UPDATE ESTOQUE
+                SET
+                    TIPO_ESTOQUE = COALESCE(p_tipo_estoque_upd, TIPO_ESTOQUE), 
+                    QTDE_ESTOQUE = COALESCE(p_qtde_estoque_upd, QTDE_ESTOQUE)
+                WHERE ID_ESTOQUE = p_id_estoque_upd;
+            END IF;
+
+            -- Atualiza o PRODUTO se um ID de produto for fornecido
+            IF p_id_produto_upd IS NOT NULL THEN
+                UPDATE PRODUTOS
+                SET
+                    NOME_PRODUTO = COALESCE(p_nome_produto_upd, NOME_PRODUTO),
+                    PRECO_PRODUTO = COALESCE(p_preco_produto_upd, PRECO_PRODUTO),
+                    FK_ID_ESTOQUE = COALESCE(p_fk_id_estoque_upd, FK_ID_ESTOQUE),
+                    DESC_PRODUTO = COALESCE(p_desc_produto_upd, DESC_PRODUTO),
+                    NUMERO_NF_PRODUTO = COALESCE(p_numero_nf_produto_upd, NUMERO_NF_PRODUTO)
+                WHERE ID_PRODUTO = p_id_produto_upd;
+            END IF;
+
+            COMMIT;
+
+        END 
         ''')
         
         #Procedure de listar produtos
         cursor.execute('''
         CREATE PROCEDURE LISTAR_PRODUTOS()
         BEGIN
-        SELECT * FROM PRODUTOS;
+            SELECT p.NOME_PRODUTO, p.PRECO_PRODUTO, p.DESC_PRODUTO, p.FK_ID_ESTOQUE, p.numero_nf_produto, e.TIPO_ESTOQUE, e.QTDE_ESTOQUE
+            FROM PRODUTOs p
+            LEFT JOIN ESTOQUE e ON e.ID_ESTOQUE = p.FK_ID_ESTOQUE;
         END
         ''')
         
@@ -282,32 +295,25 @@ def criar_tabelas():
         
         #Procedure exluir produto geral
         cursor.execute('''
-        CREATE PROCEDURE EXCLUIR_PRODUTO_GERAL(
-        IN P_ID_PRODUTO INT
+        CREATE PROCEDURE EXCLUIR_ESTOQUE_PRODUTOS(
+            IN p_id_estoque INT
         )
         BEGIN
-        DECLARE estoque_id INT;
+            DECLARE EXIT HANDLER FOR SQLEXCEPTION
+            BEGIN
+                ROLLBACK;
+                RESIGNAL;
+            END;
+            START TRANSACTION;
 
-        START TRANSACTION;
+            DELETE FROM PRODUTOS
+            WHERE FK_ID_ESTOQUE = p_id_estoque;
 
-        SELECT FK_ID_ESTOQUE INTO estoque_id
-        FROM PRODUTOS
-        WHERE ID_PRODUTO = P_ID_PRODUTO;
+            DELETE FROM ESTOQUE
+            WHERE ID_ESTOQUE = p_id_estoque;
 
-        IF estoque_id IS NULL THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Erro: Produto não encontrado.';
-        ROLLBACK;
-        ELSE
-        DELETE FROM PRODUTOS
-        WHERE ID_PRODUTO = P_ID_PRODUTO;
-
-        DELETE FROM ESTOQUE
-        WHERE ID_ESTOQUE = estoque_id;
-
-        COMMIT;
-        END IF;
-        END               
+            COMMIT;
+        END                
         ''')
         
         # Procedure de procurar produto por ID
