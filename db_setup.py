@@ -1,25 +1,42 @@
-# db_setup.py (ou no próprio main.py, se preferir)
-
+from database.db_model import DBModel  # Ajuste o caminho se necessário
 import mysql.connector
 from mysql.connector import Error
 
 def criar_banco_de_dados():
     try:
-        connection = mysql.connector.connect(host='localhost', user='root', password='')
+        # Carrega as configurações do .env via DBModel
+        db_config = DBModel.get_dotenv_create_db()
+
+        connection = mysql.connector.connect(
+            host=db_config.host,
+            user=db_config.user,
+            password=db_config.password
+        )
 
         cursor = connection.cursor()
-        cursor.execute("CREATE DATABASE IF NOT EXISTS db;")
-        print("Banco de dados criado ou já existente.")
+        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_config.database};")
+        connection.commit()  # <- IMPORTANTE!
+        print(f"✅ Banco de dados '{db_config.database}' criado ou já existente.")
     except Error as e:
-        print(f"Erro ao criar banco de dados: {e}")
+        print(f"❌ Erro ao criar banco de dados: {e}")
     finally:
         if connection.is_connected():
             cursor.close()
             connection.close()
 
+
 def criar_tabelas():
+    connection = None
+    cursor = None
     try:
-        connection = mysql.connector.connect(host='localhost', user='root', password='', database='db')
+        db_config = DBModel.get_dotenv()
+
+        connection = mysql.connector.connect(
+            host=db_config.host,
+            user=db_config.user,
+            password=db_config.password,
+            database=db_config.database
+        )
         cursor = connection.cursor()
 
         #CRIAÇÃO DE TABELAS
@@ -452,11 +469,11 @@ def criar_tabelas():
         ''')
         
         # ADICIONAR OUTRAS PROCEDURES AQUI
-
+        connection.commit()
         print("Tabelas e procedures criadas com sucesso.")
     except Error as e:
         print(f"Erro ao criar tabelas ou procedures: {e}")
     finally:
-        if connection.is_connected():
+        if connection and connection.is_connected():
             cursor.close()
             connection.close()

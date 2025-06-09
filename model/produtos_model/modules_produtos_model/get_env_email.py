@@ -30,7 +30,8 @@ def get_dotenv_email():
         }
         if not os.path.exists(email_config["local_annex"]):
             os.makedirs(email_config["local_annex"])
-            print(f"Pasta '{email_config["local_annex"]}' criada para salvar anexos.")
+            print(f"Pasta '{email_config['local_annex']}' criada para salvar anexos.")
+
 
         return email_config, 'Arquivo .env encontrado'
     except (FileNotFoundError, ValueError) as e: # Captura exceções específicas
