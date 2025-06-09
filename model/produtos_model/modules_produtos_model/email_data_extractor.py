@@ -48,7 +48,7 @@ def read_email_data():
             lista_ids.reverse()
             
 
-            print(f"\nSeus {min(config_data["qtde_email"], len(lista_ids))} e-mails mais recentes: ")
+            print(f"\nSeus {min(config_data['qtde_email'], len(lista_ids))} e-mails mais recentes: ")
 
             for i, id_email in enumerate(lista_ids[:config_data["qtde_email"]]):
                 status, dados_msg = mail.fetch(id_email, "(RFC822)")

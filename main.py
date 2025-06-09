@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from router.usuarios_router import router as usuario_router
 from router.produto_route import router as produto_router
-
+from database.db_model import DBModel
 from db_setup import criar_banco_de_dados, criar_tabelas
 from controller.produtos_controller.produtos_controller import iniciar_coleta_email_controller
 
@@ -21,11 +21,12 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup():
-    # Cria o banco de dados, se não existir
-    criar_banco_de_dados()
+    db_config = DBModel.get_dotenv_create_db()
+    print(f"🔧 Iniciando com banco: {db_config.database}")
     
-    # Cria as tabelas e procedures
+    criar_banco_de_dados()
     criar_tabelas()
+
 
 # # Inclui a router de usuários
 app.include_router(usuario_router, tags=["Usuários"])
