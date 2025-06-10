@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List
+from datetime import date
 from utils.auth import pegar_usuario
 from controller.produtos_controller.produtos_controller import (
     insert_produto_controller,
@@ -18,18 +19,24 @@ class Produto(BaseModel):
     preco_produto: float  
     desc_produto: str
     numero_nf_produto:str
+    validade_produto: date
+    fornecedor_produto: str
+    qtd_minima_produto: int
 
 class Estoque(BaseModel):
-    tipo_estoque: str
+    id_estoque: int
+    categoria_estoque: str
     qtde_estoque: int
 
 class ProdutoUpdate(BaseModel):
+    id_produto: int
     nome_produto: str
     preco_produto: float  
     desc_produto: str
-    tipo_estoque: str
-    qtde_estoque: int
-    tipo_atualizacao: int 
+    numero_nf_produto: str
+    validade_produto: date
+    fornecedor_produto: str
+    qtd_minima_produto: int
 
 class ProdutoDelete(BaseModel):
     nome_produto: str
@@ -42,9 +49,12 @@ def cadastrar_produto_router(produto: Produto, estoque: Estoque, usuario=Depends
             produto.nome_produto,
             produto.preco_produto,
             produto.desc_produto,
-            estoque.tipo_estoque,
+            estoque.categoria_estoque,
             estoque.qtde_estoque,
-            produto.numero_nf_produto
+            produto.numero_nf_produto,
+            produto.validade_produto,
+            produto.fornecedor_produto,
+            produto.qtd_minima_produto
         )
         return {"message": "Produto e estoque cadastrados com sucesso!"}
     except Exception as err:
@@ -76,14 +86,21 @@ def excluir_produto_router(id: int, usuario=Depends(pegar_usuario)):
 
 @router.put("/produto")
 #def atualizar_produto_router(produto: ProdutoUpdate):
-def atualizar_produto_router(produto: ProdutoUpdate, usuario=Depends(pegar_usuario)):
+def atualizar_produto_router(produto: ProdutoUpdate, estoque: Estoque, usuario=Depends(pegar_usuario)):
     update_produto_controller(
+        estoque.id_estoque,
+        estoque.categoria_estoque,
+        estoque.qtde_estoque,        
+        
+        produto.id_produto,
         produto.nome_produto,
         produto.preco_produto,
+        estoque.id_estoque,
         produto.desc_produto,
-        produto.tipo_estoque,
-        produto.qtde_estoque,
-        produto.tipo_atualizacao
+        produto.numero_nf_produto,
+        produto.validade_produto,
+        produto.fornecedor_produto,
+        produto.qtd_minima_produto
     )
     return {"message": "Produto atualizado com sucesso."}
 

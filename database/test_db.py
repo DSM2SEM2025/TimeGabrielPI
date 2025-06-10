@@ -11,15 +11,26 @@ def main():
         print(msg)
         try:
             cursor = conn.cursor()
-            querry= "CALL CADASTRAR_PRODUTO_ESTOQUE(%s, %s, %s, %s, %s)"
-            data = ('maça', 22.50, 'MAÇA MUITO SUCULENTA', 'maça', 400)
-            cursor.execute(querry, data)
+
+            query = "CALL CADASTRAR_PRODUTO_ESTOQUE(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            data = (
+                'maçã',                # P_NOME_PRODUTO
+                22.50,                 # P_PRECO_PRODUTO
+                'Maçã muito suculenta',# P_DESC_PRODUTO
+                'NF-001122',           # P_NUMERO_NF_PRODUTO
+                '2025-12-31',          # P_VALIDADE_PRODUTO
+                'Fornecedor X',        # P_FORNECEDOR_PRODUTO
+                10,                    # P_QTD_MINIMA_PRODUTO
+                'Alimentos',           # P_CATEGORIA_ESTOQUE (ENUM válido)
+                400                    # P_QTDE_ESTOQUE
+            )
+
+            cursor.execute(query, data)
             conn.commit()
             cursor.close()
-            db.disconnect()
+
+        except Error as e:
+            print("Erro ao executar procedure:", e)
+
         finally:
-            db.disconect()
-
-if __name__ == "__main__":
-    main()
-
+            db.disconnect()

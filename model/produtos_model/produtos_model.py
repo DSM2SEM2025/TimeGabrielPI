@@ -6,14 +6,18 @@ from typing import Optional, Protocol
 from model.produtos_model.modules_produtos_model.pdf_reader import read_pdf
 from model.produtos_model.modules_produtos_model.email_data_extractor import read_email_data, baixar_anexos_pdf
 
-def CADASTRAR_PRODUTO_ESTOQUE(NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, TIPO_PRODUTO, QTDE_ESTOQUE, NUMERO_NF_PRODUTO):
+def CADASTRAR_PRODUTO_ESTOQUE(NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO,
+                              NUMERO_NF_PRODUTO, VALIDADE_PRODUTO, FORNECEDOR_PRODUTO,
+                              QTD_MINIMA_PRODUTO, CATEGORIA_ESTOQUE, QTDE_ESTOQUE):
     config = DBModel.get_dotenv()
     db = MySqlConnector(config)
     conn, msg = db.connection()
     try:
         cursor = conn.cursor()
-        command = "CALL CADASTRAR_PRODUTO_ESTOQUE(%s, %s, %s, %s, %s, %s)"
-        values = (NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO, TIPO_PRODUTO, QTDE_ESTOQUE, NUMERO_NF_PRODUTO)
+        command = "CALL CADASTRAR_PRODUTO_ESTOQUE(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        values = (NOME_PRODUTO, PRECO_PRODUTO, DESC_PRODUTO,
+                              NUMERO_NF_PRODUTO, VALIDADE_PRODUTO, FORNECEDOR_PRODUTO,
+                              QTD_MINIMA_PRODUTO, CATEGORIA_ESTOQUE, QTDE_ESTOQUE)
         cursor.execute(command, values)
         conn.commit()
         return True, 'sucesso'
@@ -42,6 +46,7 @@ def LISTAR_PRODUTOS():
         conn.close()
         return produtos
     except Error as error:
+        print(f"Erro ao listar produtos: {error}")
         return []
 # print(LISTAR_PRODUTOS())
 
@@ -67,14 +72,17 @@ def PROCURAR_PRODUTO_ID(ID_PRODUTO):
 
 def ATUALIZAR_PRODUTO(
     #atualizar o estoque
-    p_id_estoque_upd=None,p_tipo_estoque_upd=None,p_qtde_estoque_upd=None,     
+    p_id_estoque_upd=None,p_categoria_estoque_upd=None,p_qtde_estoque_upd=None,     
     #parte para atualizar o produto
     p_id_produto_upd=None,       
     p_nome_produto_upd=None,     
     p_preco_produto_upd=None,    
     p_fk_id_estoque_upd=None,    
     p_desc_produto_upd=None,     
-    p_numero_nf_produto_upd=None 
+    p_numero_nf_produto_upd=None,
+    p_validade_produto_upd=None,
+    p_fornecedor_produto_upd=None,
+    p_qtd_minima_produto_upd=None
 ):
     config = DBModel.get_dotenv()
     db = MySqlConnector(config)
@@ -84,17 +92,20 @@ def ATUALIZAR_PRODUTO(
         return False, f"Falha na conexão: {msg}"
     try:
         cursor = conn.cursor()
-        command = "CALL ATUALIZAR_ESTOQUE_PRODUTO(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        command = "CALL ATUALIZAR_ESTOQUE_PRODUTO(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         values = (
             p_id_estoque_upd,
-            p_tipo_estoque_upd,
+            p_categoria_estoque_upd,
             p_qtde_estoque_upd,
             p_id_produto_upd,
             p_nome_produto_upd,
             p_preco_produto_upd,
             p_fk_id_estoque_upd,
             p_desc_produto_upd,
-            p_numero_nf_produto_upd
+            p_numero_nf_produto_upd,
+            p_validade_produto_upd,
+            p_fornecedor_produto_upd,
+            p_qtd_minima_produto_upd
         )
         cursor.execute(command, values)
         conn.commit()

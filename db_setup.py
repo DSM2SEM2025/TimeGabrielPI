@@ -1,4 +1,4 @@
-from database.db_model import DBModel  # Ajuste o caminho se necessário
+from database.db_model import DBModel 
 import mysql.connector
 from mysql.connector import Error
 
@@ -57,7 +57,7 @@ def criar_tabelas():
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS ESTOQUE(
 	    ID_ESTOQUE INT AUTO_INCREMENT PRIMARY KEY,
-    	TIPO_ESTOQUE VARCHAR(255) NOT NULL UNIQUE,
+    	CATEGORIA_ESTOQUE ENUM('Alimentos', 'Bebidas', 'Laticínios') NOT NULL,
 	    QTDE_ESTOQUE INT
         );
         ''')
@@ -71,6 +71,9 @@ def criar_tabelas():
         FK_ID_ESTOQUE INT DEFAULT NULL,
 	    DESC_PRODUTO VARCHAR(255) NULL,
         NUMERO_NF_PRODUTO VARCHAR(255) NULL UNIQUE,
+        VALIDADE_PRODUTO DATE NOT NULL,
+        FORNECEDOR_PRODUTO VARCHAR(255) NULL,
+        QTD_MINIMA_PRODUTO INT NOT NULL,
         FOREIGN KEY (FK_ID_ESTOQUE) REFERENCES ESTOQUE(ID_ESTOQUE) ON DELETE SET NULL
         );               
         ''')
@@ -163,6 +166,8 @@ def criar_tabelas():
         END
 
         ''')
+
+        cursor.execute("DROP PROCEDURE IF EXISTS CADASTRAR_PRODUTO_ESTOQUE")
         
         #procedure cadastrar produto no estoque
         cursor.execute('''
@@ -170,9 +175,12 @@ def criar_tabelas():
             IN P_NOME_PRODUTO VARCHAR(255),
             IN P_PRECO_PRODUTO FLOAT,
             IN P_DESC_PRODUTO VARCHAR(255),
-            IN P_TIPO_ESTOQUE VARCHAR(255),
+            IN P_CATEGORIA_ESTOQUE VARCHAR(50),
             IN P_QTDE_ESTOQUE INT,
-            IN P_NUMERO_NF_PRODUTO VARCHAR(255) 
+            IN P_NUMERO_NF_PRODUTO VARCHAR(255),
+            IN P_VALIDADE_PRODUTO DATE,
+            IN P_FORNECEDOR_PRODUTO VARCHAR(255),
+            IN P_QTD_MINIMA_PRODUTO INT
         )
         BEGIN
             DECLARE V_ID_PRODUTO INT;
@@ -198,24 +206,24 @@ def criar_tabelas():
             ELSE
                 SELECT ID_ESTOQUE INTO V_ID_ESTOQUE
                 FROM ESTOQUE
-                WHERE TIPO_ESTOQUE = LOWER(P_TIPO_ESTOQUE); 
+                WHERE CATEGORIA_ESTOQUE = LOWER(P_CATEGORIA_ESTOQUE); 
 
                 IF V_ID_ESTOQUE IS NOT NULL THEN
                     UPDATE ESTOQUE
                     SET QTDE_ESTOQUE = QTDE_ESTOQUE + P_QTDE_ESTOQUE
                     WHERE ID_ESTOQUE = V_ID_ESTOQUE;
 
-                    INSERT INTO PRODUTOS(NOME_PRODUTO, PRECO_PRODUTO, FK_ID_ESTOQUE, DESC_PRODUTO, NUMERO_NF_PRODUTO) 
-                    VALUES(P_NOME_PRODUTO, P_PRECO_PRODUTO, V_ID_ESTOQUE, P_DESC_PRODUTO, P_NUMERO_NF_PRODUTO);
+                    INSERT INTO PRODUTOS(NOME_PRODUTO, PRECO_PRODUTO, FK_ID_ESTOQUE, DESC_PRODUTO, NUMERO_NF_PRODUTO, VALIDADE_PRODUTO, FORNECEDOR_PRODUTO, QTD_MINIMA_PRODUTO) 
+                    VALUES(P_NOME_PRODUTO, P_PRECO_PRODUTO, V_ID_ESTOQUE, P_DESC_PRODUTO, P_NUMERO_NF_PRODUTO, P_VALIDADE_PRODUTO, P_FORNECEDOR_PRODUTO, P_QTD_MINIMA_PRODUTO);
 
                 ELSE
-                    INSERT INTO ESTOQUE(TIPO_ESTOQUE, QTDE_ESTOQUE)
-                    VALUES(P_TIPO_ESTOQUE, P_QTDE_ESTOQUE);
+                    INSERT INTO ESTOQUE(CATEGORIA_ESTOQUE, QTDE_ESTOQUE)
+                    VALUES(P_CATEGORIA_ESTOQUE, P_QTDE_ESTOQUE);
                     
                     SET V_ID_ESTOQUE = LAST_INSERT_ID();
 
-                    INSERT INTO PRODUTOS(NOME_PRODUTO, PRECO_PRODUTO, FK_ID_ESTOQUE, DESC_PRODUTO, NUMERO_NF_PRODUTO)
-                    VALUES(P_NOME_PRODUTO, P_PRECO_PRODUTO, V_ID_ESTOQUE, P_DESC_PRODUTO, P_NUMERO_NF_PRODUTO);
+                    INSERT INTO PRODUTOS(NOME_PRODUTO, PRECO_PRODUTO, FK_ID_ESTOQUE, DESC_PRODUTO, NUMERO_NF_PRODUTO, VALIDADE_PRODUTO, FORNECEDOR_PRODUTO, QTD_MINIMA_PRODUTO)
+                    VALUES(P_NOME_PRODUTO, P_PRECO_PRODUTO, V_ID_ESTOQUE, P_DESC_PRODUTO, P_NUMERO_NF_PRODUTO, P_VALIDADE_PRODUTO, P_FORNECEDOR_PRODUTO, P_QTD_MINIMA_PRODUTO);
                 END IF;
             END IF;
 
@@ -229,7 +237,7 @@ def criar_tabelas():
         CREATE PROCEDURE ATUALIZAR_ESTOQUE_PRODUTO(
             -- Parâmetros para ESTOQUE (opcionais)
             IN p_id_estoque_upd INT,
-            IN p_tipo_estoque_upd VARCHAR(255),
+            IN p_categoria_estoque_upd VARCHAR(255),
             IN p_qtde_estoque_upd INT,
 
             -- Parâmetros para PRODUTOS (opcionais)
@@ -238,7 +246,10 @@ def criar_tabelas():
             IN p_preco_produto_upd FLOAT,
             IN p_fk_id_estoque_upd INT,
             IN p_desc_produto_upd VARCHAR(255),
-            IN p_numero_nf_produto_upd VARCHAR(255)
+            IN p_numero_nf_produto_upd VARCHAR(255),
+            IN p_validade_produto_upd DATE,
+            IN p_fornecedor_produto_upd VARCHAR(255),
+            IN p_qtd_minima_produto_upd INT
         )
         BEGIN
             -- Handler de erro para reverter transação em caso de exceção SQL
@@ -253,7 +264,7 @@ def criar_tabelas():
             IF p_id_estoque_upd IS NOT NULL THEN
                 UPDATE ESTOQUE
                 SET
-                    TIPO_ESTOQUE = COALESCE(p_tipo_estoque_upd, TIPO_ESTOQUE), 
+                    CATEGORIA_ESTOQUE = COALESCE(p_categoria_estoque_upd, CATEGORIA_ESTOQUE), 
                     QTDE_ESTOQUE = COALESCE(p_qtde_estoque_upd, QTDE_ESTOQUE)
                 WHERE ID_ESTOQUE = p_id_estoque_upd;
             END IF;
@@ -266,7 +277,10 @@ def criar_tabelas():
                     PRECO_PRODUTO = COALESCE(p_preco_produto_upd, PRECO_PRODUTO),
                     FK_ID_ESTOQUE = COALESCE(p_fk_id_estoque_upd, FK_ID_ESTOQUE),
                     DESC_PRODUTO = COALESCE(p_desc_produto_upd, DESC_PRODUTO),
-                    NUMERO_NF_PRODUTO = COALESCE(p_numero_nf_produto_upd, NUMERO_NF_PRODUTO)
+                    NUMERO_NF_PRODUTO = COALESCE(p_numero_nf_produto_upd, NUMERO_NF_PRODUTO),
+                    VALIDADE_PRODUTO = COALESCE(p_validade_produto_upd, VALIDADE_PRODUTO),
+                    FORNECEDOR_PRODUTO = COALESCE(p_fornecedor_produto_upd, FORNECEDOR_PRODUTO),
+                    QTD_MINIMA_PRODUTO = COALESCE(p_qtd_minima_produto_upd, QTD_MINIMA_PRODUTO)
                 WHERE ID_PRODUTO = p_id_produto_upd;
             END IF;
 
@@ -279,11 +293,21 @@ def criar_tabelas():
         cursor.execute('''
         CREATE PROCEDURE LISTAR_PRODUTOS()
         BEGIN
-            SELECT p.NOME_PRODUTO, p.PRECO_PRODUTO, p.DESC_PRODUTO, p.FK_ID_ESTOQUE, p.numero_nf_produto, e.TIPO_ESTOQUE, e.QTDE_ESTOQUE
-            FROM PRODUTOs p
+            SELECT 
+                p.NOME_PRODUTO, 
+                p.PRECO_PRODUTO, 
+                p.DESC_PRODUTO,
+                p.NUMERO_NF_PRODUTO,
+                p.VALIDADE_PRODUTO,
+                p.FORNECEDOR_PRODUTO,
+                p.QTD_MINIMA_PRODUTO,
+                e.CATEGORIA_ESTOQUE, 
+                e.QTDE_ESTOQUE
+            FROM PRODUTOS p
             LEFT JOIN ESTOQUE e ON e.ID_ESTOQUE = p.FK_ID_ESTOQUE;
         END
         ''')
+
         
         # Procedure de fazer login
         cursor.execute('''
@@ -345,8 +369,13 @@ def criar_tabelas():
 		p.NOME_PRODUTO,
 		p.PRECO_PRODUTO,
 		p.DESC_PRODUTO,
+        p.NUMERO_NF_PRODUTO,
+        p.VALIDADE_PRODUTO,
+        p.FORNECEDOR_PRODUTO,
+        p.QTD_MINIMA_PRODUTO,
 		e.ID_ESTOQUE,
-		e.TIPO_ESTOQUE
+        e.QTDE_ESTOQUE,
+		e.CATEGORIA_ESTOQUE
 		FROM PRODUTOS p JOIN ESTOQUE e ON p.FK_ID_ESTOQUE = e.ID_ESTOQUE WHERE p.ID_PRODUTO = P_ID_PRODUTO;
         ELSE
 		SIGNAL SQLSTATE '45000'
