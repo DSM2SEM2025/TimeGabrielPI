@@ -384,7 +384,6 @@ const fazerBuscaEmail = async () => {
   emailStatus.value = "";
   pdfDetails.value = []; // Limpa detalhes de PDFs anteriores
 
-  // Descomente se seu 'api' NÃO adiciona o token automaticamente
   // const token = getAuthToken();
   // if (!token) {
   //   isLoadingEmail.value = false;
@@ -392,8 +391,6 @@ const fazerBuscaEmail = async () => {
   // }
 
   try {
-    // AJUSTE O CAMINHO: Se seu `api` já tem base "http://localhost:8000/api",
-    // a rota completa será "/automacao/coletar-emails".
     const response = await api.get('/coletar-emails' /* , { headers: { Authorization: `Bearer ${token}` }} */);
 
     emailMessage.value = response.data.mensagem;

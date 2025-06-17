@@ -440,11 +440,20 @@ def inserir_atividade(tipo, descricao, quantidade):
     
     try:
         cursor = conn.cursor()
-        command = "INSERT INTO ATIVIDADES (TIPO, DESCRICAO, QUANTIDADE) VALUES (%s, %s, %s)"
-        values = (tipo, descricao, quantidade)
-        cursor.execute(command, values)
-        conn.commit()
-        return True, "Atividade inserida com sucesso"
+        verificar_na_tabela = "select 1 from ATIVIDADES where tipo = %s and descricao = %s and quantidade = %s"
+        values=(tipo, descricao, quantidade)
+        cursor.execute(verificar_na_tabela, values)
+        res = cursor.fetchone()
+        #fetchone
+        #fetchall
+        if res:
+            return False, 'Atividade já inserida'
+        else:
+            command = "INSERT INTO ATIVIDADES (TIPO, DESCRICAO, QUANTIDADE) VALUES (%s, %s, %s)"
+            values = (tipo, descricao, quantidade)
+            cursor.execute(command, values)
+            conn.commit()
+            return True, "Atividade inserida com sucesso"
     
     except Exception as e:
         return False, f"Erro ao inserir atividade: {e}"
@@ -452,7 +461,9 @@ def inserir_atividade(tipo, descricao, quantidade):
     finally:
         cursor.close()
         conn.close()
-        
+print(inserir_atividade('adição',"Produto 'Queijo Minas Frescal' cadastrado no estoque.",3))   
+
+
 def buscar_atividades_recentes(limit=100):
     """
     Busca as atividades mais recentes do banco de dados.
