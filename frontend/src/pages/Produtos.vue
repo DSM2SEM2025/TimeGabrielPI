@@ -144,8 +144,60 @@
         </form>
       </div>
 
+      
       <!-- Registro Automatizado -->
       <div class="space-y-4 sm:space-y-6">
+        <div class="bg-white rounded-xl shadow p-4 sm:p-6">
+          <h2 class="text-lg font-semibold mb-4 sm:mb-6">Registro Automatizado de Produto</h2>
+
+          <div class="flex flex-col space-y-4"> <div class="flex">
+              <button
+                @click="fazerBuscaEmail"
+                :disabled="isLoadingEmail || isLoadingPdf"
+                type="button" class="w-full sm:w-auto px-4 py-2 text-white bg-purple-500 rounded-lg hover:bg-purple-600 text-sm sm:text-base transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {{ isLoadingEmail ? "Buscando..." : "Fazer Busca no Email" }}
+              </button>
+            </div>
+
+            <div class="flex">
+              <button
+                @click="inserirProdutosEstoque"
+                :disabled="isLoadingEmail || isLoadingPdf"
+                type="button" class="w-full sm:w-auto px-4 py-2 text-white bg-purple-500 rounded-lg hover:bg-purple-600 text-sm sm:text-base transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {{ isLoadingPdf ? "Inserindo..." : "Inserir Produtos no Estoque" }}
+              </button>
+            </div>
+          </div>
+
+          <div v-if="emailMessage.length > 0" :class="messageClass(emailStatus)" class="mt-4 p-3 rounded-md text-sm">
+            {{ emailMessage }}
+          </div>
+          <div v-if="pdfMessage.length > 0" :class="messageClass(pdfStatus)" class="mt-4 p-3 rounded-md text-sm">
+            {{ pdfMessage }}
+          </div>
+          <div v-if="pdfDetails.length > 0" class="mt-4 p-3 bg-gray-50 rounded-md text-sm max-h-48 overflow-y-auto">
+            <h4 class="font-semibold mb-2">Detalhes do Processamento:</h4>
+            <ul>
+              <li v-for="(item, index) in pdfDetails" :key="index" class="mb-1">
+                - PDF: {{ item.nome_arquivo_pdf || 'N/A' }}, Produto: {{ item.nome_produto || 'N/A' }}
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+
+
+
+
+
+
+
+
+
+      <!-- <div class="space-y-4 sm:space-y-6">
         <div class="bg-white rounded-xl shadow p-4 sm:p-6">
           <h2 class="text-lg font-semibold mb-4 sm:mb-6">Registro Automatizado de Produto</h2>
 
@@ -168,10 +220,10 @@
                 Inserir Produtos no Estoque
               </button>
             </div>
-        </div>
+        </div> -->
 
         <!-- "Como funciona" -->
-        <div class="bg-blue-50 rounded-xl p-4 sm:p-6">
+        <!-- <div class="bg-blue-50 rounded-xl p-4 sm:p-6">
           <h3 class="font-semibold mb-4">Como funciona:</h3>
           <ul class="space-y-3 sm:space-y-4">
             <li class="flex items-start">
@@ -194,7 +246,9 @@
             </li>
           </ul>
         </div>
-      </div>
+      </div> -->
+      
+      
     </div>
   </div>
 </template>
@@ -287,4 +341,108 @@ const resetForm = () => {
     };
   }
 };
+const isLoadingEmail = ref(false);
+const emailMessage = ref('');
+const emailStatus = ref(''); // 'success', 'error', 'info'
+
+// Estado para o processamento de PDFs
+const isLoadingPdf = ref(false);
+const pdfMessage = ref('');
+const pdfStatus = ref(''); // 'success', 'error', 'info'
+const pdfDetails = ref([]); // Para armazenar os detalhes_processamento se houver
+
+// Helper para determinar a classe CSS da mensagem
+const messageClass = (status) => {
+  if (status === 'success') {
+    return 'bg-green-100 text-green-700';
+  } else if (status === 'error') {
+    return 'bg-red-100 text-red-700';
+  } else if (status === 'info') {
+    return 'bg-blue-100 text-blue-700';
+  }
+  return ''; // Nenhuma classe se o status não for definido
+};
+
+// Função para obter o token JWT do usuário
+// VERIFIQUE SE SEU `api` EM '@/services/api' JÁ ADICIONA O TOKEN AUTOMATICAMENTE
+// via um interceptor. Se sim, você pode remover esta função e as linhas de 'const token = getAuthToken();'
+const getAuthToken = () => {
+  const token = localStorage.getItem("access_token"); // Exemplo: pegando do localStorage
+  if (!token) {
+    console.error("Token de autenticação não encontrado.");
+    alert("Você precisa estar logado para realizar esta ação.");
+    router.push('/login'); // Redirecionar para login
+    return null;
+  }
+  return token;
+};
+
+// Função para chamar o endpoint de coleta de e-mails
+const fazerBuscaEmail = async () => {
+  isLoadingEmail.value = true;
+  emailMessage.value = "";
+  emailStatus.value = "";
+  pdfDetails.value = []; // Limpa detalhes de PDFs anteriores
+
+  // Descomente se seu 'api' NÃO adiciona o token automaticamente
+  // const token = getAuthToken();
+  // if (!token) {
+  //   isLoadingEmail.value = false;
+  //   return;
+  // }
+
+  try {
+    // AJUSTE O CAMINHO: Se seu `api` já tem base "http://localhost:8000/api",
+    // a rota completa será "/automacao/coletar-emails".
+    const response = await api.get('/coletar-emails' /* , { headers: { Authorization: `Bearer ${token}` }} */);
+
+    emailMessage.value = response.data.mensagem;
+    emailStatus.value = response.data.status;
+
+  } catch (error) {
+    console.error("Erro na busca de e-mails:", error);
+    if (error.response && error.response.data && error.response.data.detail) {
+      emailMessage.value = `Erro: ${error.response.data.detail}`;
+    } else {
+      emailMessage.value = `Erro de conexão: ${error.message}. Verifique a API.`;
+    }
+    emailStatus.value = "error";
+  } finally {
+    isLoadingEmail.value = false;
+  }
+};
+
+// Função para chamar o endpoint de processamento de PDFs
+const inserirProdutosEstoque = async () => {
+  isLoadingPdf.value = true;
+  pdfMessage.value = "";
+  pdfStatus.value = "";
+  pdfDetails.value = [];
+
+
+  try {
+
+    //const response = await api.post('/processar-pdfs' /* , { headers: { Authorization: `Bearer ${token}` }} */);
+    const response = await api.post('/processar-pdfs');
+
+    pdfMessage.value = response.data.mensagem;
+    pdfStatus.value = response.data.status;
+    if (response.data.detalhes_processamento && Array.isArray(response.data.detalhes_processamento)) {
+      pdfDetails.value = response.data.detalhes_processamento;
+    }
+
+  } catch (error) {
+    console.error("Erro na inserção de produtos:", error);
+    if (error.response && error.response.data && error.response.data.detail) {
+      pdfMessage.value = `Erro: ${error.response.data.detail}`;
+    } else {
+      pdfMessage.value = `Erro de conexão: ${error.message}. Verifique a API.`;
+    }
+    pdfStatus.value = "error";
+  } finally {
+    isLoadingPdf.value = false;
+  }
+};
+
+
 </script>
