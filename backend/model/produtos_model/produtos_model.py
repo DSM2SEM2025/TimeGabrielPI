@@ -202,6 +202,7 @@ def ATUALIZAR_PRODUTO(
 def EXCLUIR_PRODUTO_GERAL(ID_ESTOQUE):
     """
     Exclui um registro de estoque e os produtos relacionados a ele no banco de dados.
+    Parametros: Recebe id do estoque a ser excluido
     """
     config = DBModel.get_dotenv() # Pega as configurações do banco
     db = MySqlConnector(config) # Cria o conector MySQL.
