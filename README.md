@@ -83,34 +83,46 @@ frontend/
 
 ```
 backend/
-├── main.py                     # Ponto de entrada da aplicação FastAPI
-├── requirements.txt            # Dependências do projeto
+├── main.py                          # Ponto de entrada da aplicação FastAPI
+├── req.txt e req2.txt               # Arquivos com as dependências do projeto
+├── db_setup.py                      # Script para criação do banco e tabelas
 │
-├── controller/                 # Lógica de controle das rotas
-│   ├── produtos_controller.py  # Controlador para produtos
-│   └── usuarios_controller.py  # Controlador para usuários
+├── controller/                      # Camada de controle (regras de negócio)
+│   ├── dashboard_controller/
+│   │   └── dashboard_controller.py  # Controlador de dados do dashboard
+│   ├── produtos_controller/
+│   │   └── produtos_controller.py   # Controlador para produtos
+│   └── usuarios_controller/
+│       └── usuarios_controller.py  # Controlador para usuários
 │
-├── database/                   # Configurações e scripts de banco de dados
-│   ├── db_model.py             # Carregamento de variáveis de ambiente (.env)
-│   ├── db_mysql.py             # Conexão com o banco de dados MySQL
-│   ├── test_db.py              # Script de teste de conexão ao banco
-│   ├── sql/                    # Scripts SQL (procedures, criação de tabelas)
-│   └── .env                    # Variáveis de ambiente (credenciais, etc.)
+├── database/                        # Configuração de banco de dados
+│   ├── db_model.py                  # Carrega variáveis de ambiente do .env
+│   ├── db_mysql.py                  # Conexão com banco de dados MySQL
+│   ├── test_db.py                   # Teste de conexão com o banco
+│   ├── sql/                         # Scripts SQL (procedures, criação de tabelas)
+│   └── .env                         # Variáveis de ambiente (.env)
 │
-├── model/                      # Definições dos modelos de dados
-│   ├── produtos_model.py       # Modelo de dados para produtos
-│   └── usuarios_model.py       # Modelo de dados para usuários
+├── model/                           # Camada de modelos de dados
+│   ├── produtos_model/
+│   │   ├── modules_produtos_model/ 
+│   │   │   ├── email_data_extractor.py   # Extração de e-mails de PDFs
+│   │   │   ├── get_env_email.py          # Lê configurações de e-mail do .env
+│   │   │   └── pdf_reader.py             # Leitura de PDFs
+│   │   ├── notificacao_model.py          # Modelo de notificações
+│   │   └── produtos_model.py             # Modelo principal de produto
+│   └── usuarios_model/
+│       └── usuarios_model.py             # Modelo principal de usuário
 │
-├── router/                     # Arquivos com rotas expostas pela API
-│   ├── produto_route.py        # Rotas relacionadas a produtos
-│   ├── usuarios_router.py      # Rotas relacionadas a usuários
-│   └── ws_router.py            # Rota de WebSocket (comunicação em tempo real)
+├── router/                          # Definição das rotas da API
+│   ├── dashboard_router.py          # Rotas relacionadas ao dashboard
+│   ├── notificacao_router.py        # Rotas para envio de notificações
+│   ├── produto_route.py             # Rotas para produtos
+│   ├── usuarios_router.py           # Rotas para usuários
+│   └── ws_router.py                 # Rota para WebSocket (tempo real)
 │
-├── utils/                      # Utilitários e funções auxiliares
-│   ├── pdf_data.py             # Funções para geração/manipulação de PDFs
-│   └── auth.py                 # Funções de autenticação/autorização
-│
-└── db_setup.py                 # Script para criação inicial do banco de dados
+└── utils/                           # Funções auxiliares reutilizáveis
+    ├── auth.py                      # Utilitários de autenticação/autorização
+    └── pdf_data/                    # Manipulação de dados de PDF
 ```
 
 ## 🚀 Instalação do Projeto
