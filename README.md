@@ -161,7 +161,7 @@ cd TimeGabrielPI
 Esse script realiza automaticamente:
 
 - Criação e ativação de ambiente virtual do Python
-- Instalação de dependências do backend (`requirements.txt`)
+- Instalação de dependências do backend (`req.txt` e `req2.txt`)
 - Instalação de dependências do frontend (`npm install`)
 - Inicialização simultânea do backend e do frontend
 
