@@ -81,6 +81,8 @@ frontend/
 
 ### Backend (`/backend`)
 
+## 📁 Estrutura do Backend
+
 ```
 backend/
 ├── main.py                          # Ponto de entrada da aplicação FastAPI
@@ -204,7 +206,7 @@ npm run preview
 
 ---
 
-## 👥 Autores
+## 👥 Desenvolvedores
 
 - Allan Martins Silva (https://github.com/allanmsilva23) — Desenvolvedor Back-end  
 - Gabriel Marques da Silva (https://github.com/the-gabriel-marques) — Desenvolvedor Back-end
