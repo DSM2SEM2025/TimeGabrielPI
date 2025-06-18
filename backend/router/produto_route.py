@@ -307,15 +307,14 @@ def registrar_saida(produto_id: int, quantidade: int):
 
 
 @router.get("/coletar-emails", summary="Inicia a coleta e download de anexos de e-mails.", status_code=status.HTTP_200_OK)
-async def coletar_emails_router(usuario=Depends(pegar_usuario)): # Protegido por dependência de usuário
+async def coletar_emails_router(usuario=Depends(pegar_usuario)): 
     """
-    Endpoint para iniciar o processo de coleta e download de anexos de e-mails.
+    função para iniciar o processo de coleta e download de anexos de e-mails.
     Requer autenticação de usuário.
     """
     print("Requisição recebida para /coletar-emails")
     try:
         # Chama a função síncrona do controller.
-        # FastAPI a executará em um thread pool.
         success, count = iniciar_coleta_email_controller() 
         
         if success:
@@ -339,9 +338,9 @@ async def coletar_emails_router(usuario=Depends(pegar_usuario)): # Protegido por
 
 
 @router.post("/processar-pdfs", summary="Inicia o processo de extração e cadastro de dados dos PDFs baixados.", status_code=status.HTTP_200_OK)
-async def processar_pdfs_router(usuario=Depends(pegar_usuario)): # Protegido por dependência de usuário
+async def processar_pdfs_router(usuario=Depends(pegar_usuario)):
     """
-    Endpoint para iniciar o processo de leitura de arquivos PDF baixados,
+    funçaõ para iniciar o processo de leitura de arquivos PDF baixados,
     extração de dados de produtos e tentativa de cadastro no banco de dados.
     
     Requer autenticação de usuário.

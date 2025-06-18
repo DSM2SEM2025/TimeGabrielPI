@@ -8,7 +8,8 @@ python -m venv venv
 echo ======== Ativando ambiente virtual e instalando dependências do backend ========
 call venv\Scripts\activate.bat
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python -m pip install -r req.txt
+python -m pip install -r req2.txt
 cd ..
 
 echo ======== Instalando dependências do frontend ========

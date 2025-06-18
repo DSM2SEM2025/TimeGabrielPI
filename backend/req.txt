@@ -12,7 +12,6 @@ h11==0.14.0
 httptools==0.6.4
 idna==3.6
 itsdangerous==2.2.0
-mysql-connector-python==8.3.0
 pdfminer.six==20250506
 pdfplumber==0.11.7
 pillow==11.2.1

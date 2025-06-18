@@ -1,3 +1,4 @@
+mysql-connector-python 
 fastapi
 pydantic
 pydantic_core

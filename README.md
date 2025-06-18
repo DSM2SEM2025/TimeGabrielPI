@@ -86,7 +86,6 @@ frontend/
 ```
 backend/
 ├── main.py                          # Ponto de entrada da aplicação FastAPI
-<<<<<<< jhon_area_de_testes_integracao_fron_back
 ├── req.txt e req2.txt               # Arquivos com as dependências do projeto
 ├── db_setup.py                      # Script para criação do banco e tabelas
 │
@@ -126,47 +125,6 @@ backend/
 └── utils/                           # Funções auxiliares reutilizáveis
     ├── auth.py                      # Utilitários de autenticação/autorização
     └── pdf_data/                    # Manipulação de dados de PDF
-=======
-├── requirements.txt                 # Arquivo com as dependências do projeto
-├── db_setup.py                      # Script para criação do banco e tabelas
-│
-├── controller/                      # Camada de controle
-│   ├── dashboard_controller/
-│   │   └── dashboard_controller.py  # Controlador de dados do dashboard
-│   ├── produtos_controller/
-│   │   └── produtos_controller.py   # Controlador para produtos
-│   └── usuarios_controller/
-│       └── usuarios_controller.py  # Controlador para usuários
-│
-├── database/                        # Configuração de banco de dados
-│   ├── db_model.py                  # Carrega variáveis de ambiente do .env
-│   ├── db_mysql.py                  # Conexão com banco de dados MySQL
-│   ├── test_db.py                   # Teste de conexão com o banco
-│   ├── sql/                         # Scripts SQL (procedures, criação de tabelas)
-│   └── .env                         # Variáveis de ambiente (.env)
-│
-├── model/                           # Camada de modelos de dados
-│   ├── produtos_model/
-│   │   ├── modules_produtos_model/ 
-│   │   │   ├── email_data_extractor.py   # Extração de e-mails de PDFs
-│   │   │   ├── get_env_email.py          # Lê configurações de e-mail do .env
-│   │   │   ├── pdf_reader.py             # Leitura de PDFs
-│   │   ├── notificacao_model.py          # Modelo de notificações
-│   │   └── produtos_model.py             # Modelo principal de produto
-│   └── usuarios_model/
-│       └── usuarios_model.py             # Modelo principal de usuário
-│
-├── router/                          # Definição das rotas da API
-│   ├── dashboard_router.py          # Rotas relacionadas ao dashboard
-│   ├── notificacao_router.py        # Rotas para notificações
-│   ├── produto_route.py             # Rotas para produtos
-│   ├── usuarios_router.py           # Rotas para usuários
-│   └── ws_router.py                 # Rota para WebSocket
-│
-└── utils/                           # Funções auxiliares reutilizáveis
-    ├── auth.py                      # Utilitários de autenticação/autorização
-    └── pdf_data.py                  # Manipulação de dados de PDF
->>>>>>> main
 ```
 
 ## 🚀 Instalação do Projeto
