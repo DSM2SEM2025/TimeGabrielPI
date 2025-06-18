@@ -29,7 +29,6 @@ def formatar_validade_para_mysql(validade_data):#facilita na hora de colocar no 
 def extrair_dados_do_texto_pdf(text):
     #coisa chata do regex... mds, solicitei para o chat gpt fazer pra mim o rgx. 
     #Desculpe professor, não tive coragem de fazer essa parte, teria que ter estudado mais tempo
-    #Se houver uma redução na nota por causa disso, pode descontar da minha: 
     #Assinado. Jhon Deyvid Quispe Mamani. Desertor do processo de aprendizado do rgx
     dados_extraidos = {} # Dicionário para armazenar os dados de um único PDF
     
